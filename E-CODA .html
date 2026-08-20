@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>E-CODA | Cricket Coding Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;500&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#04080f;--bg2:#080f1e;--bg3:#0c1828;
+  --gold:#f5c842;--gold2:#ffd700;--amber:#f5a623;
+  --cyan:#00e5ff;--cyan2:#00b4cc;
+  --green:#00e676;--red:#ff1744;--red2:#ff5252;
+  --white:#f0f4ff;--muted:#5a7a9a;
+  --card:#0d1f36;--card2:#101e33;
+  --border:rgba(0,229,255,0.18);
+  --glow-c:rgba(0,229,255,0.35);
+  --glow-g:rgba(245,200,66,0.35);
+}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Exo 2',sans-serif;overflow-x:hidden}
+canvas#stars{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.screen{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;align-items:center;justify-content:center}
+.screen.active{display:flex}
+#splash{background:radial-gradient(ellipse at 50% 30%,#0d2a4a 0%,var(--bg) 70%)}
+#splash .logo-wrap{text-align:center;animation:fadeUp 1s ease both}
+#splash .logo-sub{font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:8px;color:var(--muted);margin-bottom:28px;text-transform:uppercase}
+#splash .logo-main{font-family:'Black Han Sans',sans-serif;font-size:clamp(4rem,18vw,8rem);color:#000;-webkit-text-stroke:3px var(--cyan);text-stroke:3px var(--cyan);letter-spacing:12px;line-height:1;position:relative;filter:drop-shadow(0 0 30px var(--glow-c))}
+#splash .logo-main span{color:#000;-webkit-text-stroke:3px var(--gold);text-stroke:3px var(--gold);filter:drop-shadow(0 0 20px var(--glow-g))}
+#splash .tagline{font-size:1.1rem;color:var(--muted);letter-spacing:3px;margin-top:12px;margin-bottom:40px}
+#splash .bat-icon{font-size:3rem;animation:float 2.5s ease-in-out infinite;display:block;margin:0 auto 24px}
+#start-btn{background:transparent;border:2px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:4px;padding:14px 48px;border-radius:4px;cursor:pointer;position:relative;overflow:hidden;transition:all 0.3s}
+#start-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,229,255,0.2),transparent);transition:left 0.5s}
+#start-btn:hover::before{left:100%}
+#start-btn:hover{background:rgba(0,229,255,0.12);box-shadow:0 0 30px var(--glow-c);transform:scale(1.04)}
+.ver-badge{position:absolute;bottom:20px;font-size:0.72rem;color:var(--muted);letter-spacing:2px}
+#player-screen{background:var(--bg);padding:20px}
+.screen-header{text-align:center;margin-bottom:30px}
+.screen-header .step-label{font-size:0.7rem;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;margin-bottom:8px}
+.screen-header h2{font-family:'Rajdhani',sans-serif;font-size:2rem;font-weight:700;color:var(--white);letter-spacing:2px}
+.screen-header p{color:var(--muted);font-size:0.9rem;margin-top:6px}
+#player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;width:100%;max-width:720px;margin:0 auto}
+.player-card{background:var(--card);border:1.5px solid rgba(255,255,255,0.06);border-radius:16px;padding:18px 12px;cursor:pointer;transition:all 0.3s;text-align:center;position:relative;overflow:hidden}
+.player-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(0,229,255,0.12),transparent 70%);opacity:0;transition:opacity 0.3s}
+.player-card:hover::before,.player-card.selected::before{opacity:1}
+.player-card:hover,.player-card.selected{border-color:var(--cyan);transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,229,255,0.2)}
+.player-card.selected{border-color:var(--gold);box-shadow:0 8px 30px var(--glow-g)}
+.player-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;border:2.5px solid;position:relative}
+.player-avatar::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid;opacity:0.3}
+.p-name{font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:700;margin-bottom:3px}
+.p-role{font-size:0.68rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.custom-row{display:flex;gap:10px;width:100%;max-width:500px;margin:18px auto 0}
+.custom-row input{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:11px 16px;color:var(--white);font-family:'Exo 2',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s}
+.custom-row input:focus{border-color:var(--cyan)}
+.custom-row input::placeholder{color:var(--muted)}
+.btn-next{background:linear-gradient(135deg,#003d6b,#00527a);border:1.5px solid var(--cyan);border-radius:10px;padding:11px 28px;color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:2px;transition:all 0.25s;white-space:nowrap}
+.btn-next:hover{background:var(--cyan);color:#000;box-shadow:0 4px 20px var(--glow-c)}
+.btn-next:disabled{opacity:0.4;pointer-events:none}
+.nav-btns{display:flex;gap:12px;margin-top:24px;justify-content:center}
+.btn-back{background:transparent;border:1.5px solid rgba(255,255,255,0.15);border-radius:10px;padding:10px 20px;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;letter-spacing:2px}
+.btn-back:hover{border-color:var(--white);color:var(--white)}
+#lang-screen{background:var(--bg);padding:20px}
+#lang-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;width:100%;max-width:700px;margin:0 auto}
+.lang-card{background:var(--card);border:1.5px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px 12px;cursor:pointer;text-align:center;transition:all 0.3s;position:relative;overflow:hidden}
+.lang-card:hover,.lang-card.selected{transform:translateY(-5px);box-shadow:0 10px 35px rgba(0,0,0,0.4)}
+.lang-icon{font-size:2.8rem;margin-bottom:10px;display:block}
+.lang-name{font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:4px}
+.lang-desc{font-size:0.68rem;color:var(--muted);letter-spacing:0.5px}
+.lang-badge{position:absolute;top:8px;right:8px;font-size:0.6rem;border-radius:10px;padding:2px 7px;font-weight:700;letter-spacing:1px}
+#arena-screen{background:var(--bg);padding:0;justify-content:flex-start}
+#pitch-wrap{position:relative;height:280px;overflow:hidden;flex-shrink:0;width:100%}
+#pitch-canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+#player-hud{position:absolute;top:10px;right:12px;background:rgba(4,8,15,0.85);border:1px solid var(--gold);border-radius:14px;padding:8px 14px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(8px)}
+#hud-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;border:2px solid;flex-shrink:0}
+#hud-nm{font-family:'Rajdhani',sans-serif;font-size:0.9rem;color:var(--gold);font-weight:700;line-height:1.1}
+#hud-st{font-size:0.68rem;color:var(--muted)}
+#lang-hud{position:absolute;top:10px;left:12px;background:rgba(4,8,15,0.85);border:1px solid var(--border);border-radius:14px;padding:6px 14px;backdrop-filter:blur(8px);font-family:'Rajdhani',sans-serif;font-size:0.85rem;color:var(--cyan);letter-spacing:1px;display:flex;align-items:center;gap:6px}
+#ball{position:absolute;width:20px;height:20px;border-radius:50%;display:none;z-index:10;pointer-events:none}
+#batsman-el{position:absolute;font-size:2.8rem;transition:transform 0.3s;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5))}
+#bowler-el{position:absolute;font-size:2.2rem;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5))}
+#scoreboard{background:linear-gradient(90deg,#060e1b,#091524,#060e1b);border-top:1px solid rgba(0,229,255,0.15);border-bottom:1px solid rgba(0,229,255,0.1);padding:10px 16px;display:flex;gap:0;align-items:center;width:100%;overflow-x:auto;flex-shrink:0}
+.sc-item{text-align:center;padding:0 14px;flex-shrink:0}
+.sc-label{font-size:0.6rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:2px}
+.sc-val{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--white);line-height:1}
+.sc-val.gold{color:var(--gold)}
+.sc-val.red{color:var(--red2)}
+.sc-val.green{color:var(--green)}
+.sc-val.cyan{color:var(--cyan)}
+.sc-sep{width:1px;height:36px;background:rgba(255,255,255,0.07);flex-shrink:0}
+#code-zone{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+#q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+#q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--gold),var(--green))}
+.q-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.q-tag{border-radius:20px;padding:3px 10px;font-size:0.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.tag-diff.beginner{background:rgba(0,230,118,0.12);border:1px solid var(--green);color:var(--green)}
+.tag-diff.easy{background:rgba(0,229,255,0.12);border:1px solid var(--cyan);color:var(--cyan)}
+.tag-diff.medium{background:rgba(245,200,66,0.12);border:1px solid var(--gold);color:var(--gold)}
+.tag-diff.hard{background:rgba(255,23,68,0.12);border:1px solid var(--red2);color:var(--red2)}
+.tag-diff.expert{background:rgba(200,0,255,0.15);border:1px solid #c000ff;color:#dd88ff}
+.tag-runs{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.4);color:var(--green)}
+.tag-topic{background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);color:#7ad8ff}
+#q-text{font-size:0.97rem;line-height:1.65;color:var(--white);font-weight:300}
+#q-code{background:#010a15;border:1px solid rgba(0,229,255,0.2);border-radius:10px;padding:14px 16px;margin-top:12px;font-family:'Fira Code',monospace;font-size:0.82rem;color:#a8d8f0;white-space:pre;overflow-x:auto;display:none;line-height:1.7;border-left:3px solid var(--cyan)}
+.code-line-num{color:#2a4a6a;margin-right:12px;user-select:none}
+#opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--card2);border:1.5px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 16px;cursor:pointer;font-size:0.88rem;color:var(--white);transition:all 0.22s;text-align:left;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;line-height:1.4}
+.opt .opt-letter{display:inline-flex;width:22px;height:22px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.25);border-radius:6px;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:0.8rem;color:var(--cyan);margin-right:8px;flex-shrink:0;font-weight:700;vertical-align:middle}
+.opt:hover{border-color:var(--cyan);background:rgba(0,229,255,0.08);transform:scale(1.02);box-shadow:0 4px 16px rgba(0,229,255,0.1)}
+.opt.correct{border-color:var(--green);background:rgba(0,230,118,0.12);color:var(--green)}
+.opt.correct .opt-letter{background:rgba(0,230,118,0.2);border-color:var(--green);color:var(--green)}
+.opt.wrong{border-color:var(--red2);background:rgba(255,82,82,0.1);color:var(--red2)}
+.opt.wrong .opt-letter{background:rgba(255,82,82,0.2);border-color:var(--red2);color:var(--red2)}
+.opt.disabled{pointer-events:none;opacity:0.65}
+#feedback{display:none;border-radius:12px;padding:14px;gap:10px;align-items:flex-start;line-height:1.55;font-size:0.88rem}
+#feedback.show{display:flex}
+#feedback.good{background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.35);color:#7ef59b}
+#feedback.bad{background:rgba(255,82,82,0.07);border:1px solid rgba(255,82,82,0.3);color:#ff9090}
+#feedback .fb-icon{font-size:1.4rem;flex-shrink:0}
+#feedback strong{display:block;margin-bottom:4px;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:1px}
+#feedback .fb-explain{font-size:0.8rem;opacity:0.75;margin-top:4px;font-family:'Fira Code',monospace;background:rgba(0,0,0,0.3);border-radius:6px;padding:6px 10px;display:block}
+#next-btn{background:linear-gradient(135deg,#003d6b,#00527a);border:1.5px solid var(--cyan);border-radius:12px;padding:13px;color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;letter-spacing:3px;display:none;transition:all 0.22s;text-align:center}
+#next-btn:hover{background:var(--cyan);color:#000;box-shadow:0 4px 20px var(--glow-c)}
+#runs-pop{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:999;pointer-events:none;font-family:'Black Han Sans',sans-serif;font-size:3.5rem;padding:20px 40px;border-radius:16px;color:#000;transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);text-align:center;box-shadow:0 16px 50px rgba(0,0,0,0.6)}
+#runs-pop.show{transform:translate(-50%,-50%) scale(1)}
+#progress-wrap{width:100%;height:3px;background:rgba(255,255,255,0.05)}
+#progress-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));transition:width 0.4s ease;width:0%}
+#level-bar{display:flex;gap:6px;padding:10px 16px;width:100%;background:var(--bg2);border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;overflow-x:auto}
+.lvl-dot{flex-shrink:0;height:6px;border-radius:3px;transition:all 0.3s}
+#over-screen{background:radial-gradient(ellipse at 50% 30%,#0d2a18,#04080f 70%);padding:20px}
+#over-screen .trophy{font-size:5rem;animation:float 2s ease-in-out infinite;display:block;text-align:center;margin-bottom:10px}
+#over-screen h2{font-family:'Black Han Sans',sans-serif;font-size:2.2rem;color:var(--gold);text-align:center;letter-spacing:3px;-webkit-text-stroke:1px #b8860b}
+#final-runs{font-family:'Orbitron',sans-serif;font-size:4.5rem;font-weight:900;text-align:center;color:var(--white);line-height:1.1;margin:10px 0}
+#final-runs span{color:var(--gold);font-size:1.5rem;display:block;font-family:'Rajdhani',sans-serif;letter-spacing:3px}
+#grade-msg{text-align:center;color:var(--muted);font-size:0.95rem;max-width:420px;line-height:1.6;margin:0 auto}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:500px;margin:20px auto 0}
+.stat-box{background:var(--card);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px;text-align:center}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:700;color:var(--gold)}
+.stat-lbl{font-size:0.65rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+.lang-result{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0;font-family:'Rajdhani',sans-serif;font-size:1.1rem;color:var(--cyan);letter-spacing:2px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulse{0%,100%{opacity:0.7}50%{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes wicket{0%{transform:rotate(0)}50%{transform:rotate(-30deg)}100%{transform:rotate(0)}}
+.fade-in{animation:fadeUp 0.5s ease both}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<div class="screen active" id="splash">
+  <div class="logo-wrap fade-in">
+    <div class="logo-sub">cricket × code</div>
+    <div class="logo-main">E<span>-</span>CODA</div>
+    <div class="tagline">learn to code by playing cricket</div>
+    <span class="bat-icon">🏏</span>
+    <button id="start-btn" onclick="goTo('player-screen')">ENTER THE ARENA ▶</button>
+  </div>
+  <div class="ver-badge">V 3.0 · 30 QUESTIONS PER LANGUAGE · BEGINNER TO EXPERT</div>
+</div>
+
+<div class="screen" id="player-screen">
+  <div style="width:100%;max-width:760px;padding:20px">
+    <div class="screen-header fade-in">
+      <div class="step-label">step 1 of 2</div>
+      <h2>⚡ PICK YOUR LEGEND</h2>
+      <p>Choose your cricket hero — they'll bat alongside you in every challenge</p>
+    </div>
+    <div id="player-grid"></div>
+    <p style="text-align:center;color:var(--muted);font-size:0.8rem;margin-top:16px">— or enter your own favourite player —</p>
+    <div class="custom-row">
+      <input id="custom-name" placeholder="e.g. Sachin Tendulkar, Babar Azam ..." maxlength="30"/>
+      <button class="btn-next" onclick="setCustomPlayer()">SET ▶</button>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goTo('splash')">← BACK</button>
+      <button class="btn-next" id="player-next-btn" onclick="goTo('lang-screen')" disabled>NEXT: CHOOSE LANGUAGE →</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="lang-screen">
+  <div style="width:100%;max-width:760px;padding:20px">
+    <div class="screen-header fade-in">
+      <div class="step-label">step 2 of 2</div>
+      <h2>🖥 CHOOSE YOUR LANGUAGE</h2>
+      <p>Pick the coding language — 30 questions from beginner to expert await!</p>
+    </div>
+    <div id="lang-grid"></div>
+    <div class="nav-btns">
+      <button class="btn-back" onclick="goTo('player-screen')">← BACK</button>
+      <button class="btn-next" id="lang-next-btn" onclick="startArena()" disabled>START INNINGS →</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="arena-screen">
+  <div id="pitch-wrap">
+    <canvas id="pitch-canvas"></canvas>
+    <div id="bowler-el" style="bottom:120px;left:calc(50% - 55px);transform:translateX(-50%)">🤾</div>
+    <div id="batsman-el" style="bottom:28px;left:calc(50% + 18px);transform:translateX(-50%)">🏏</div>
+    <div id="ball"></div>
+    <div id="lang-hud"><span id="lang-hud-icon"></span><span id="lang-hud-name"></span></div>
+    <div id="player-hud">
+      <div id="hud-av"></div>
+      <div><div id="hud-nm"></div><div id="hud-st"></div></div>
+    </div>
+  </div>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+  <div id="scoreboard">
+    <div class="sc-item"><span class="sc-label">RUNS</span><div class="sc-val gold" id="sc-runs">0</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">WICKETS</span><div class="sc-val red" id="sc-wkts">0/10</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">OVERS</span><div class="sc-val cyan" id="sc-overs">0.0</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">BALLS LEFT</span><div class="sc-val" id="sc-balls">30</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">STREAK 🔥</span><div class="sc-val green" id="sc-streak">0</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">LAST BALL</span><div class="sc-val" id="sc-last">—</div></div>
+    <div class="sc-sep"></div>
+    <div class="sc-item"><span class="sc-label">LEVEL</span><div class="sc-val cyan" id="sc-level">BEGINNER</div></div>
+  </div>
+  <div id="level-bar" style="display:none"></div>
+  <div id="code-zone">
+    <div id="q-card">
+      <div class="q-meta" id="q-meta"></div>
+      <div id="q-text"></div>
+      <pre id="q-code"></pre>
+    </div>
+    <div id="opts"></div>
+    <div id="feedback"></div>
+    <button id="next-btn" onclick="nextQ()">NEXT BALL ▶▶</button>
+  </div>
+</div>
+
+<div class="screen" id="over-screen">
+  <div style="width:100%;max-width:500px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px">
+    <span class="trophy" id="trophy">🏆</span>
+    <h2 id="over-title">INNINGS COMPLETE!</h2>
+    <div class="lang-result"><span id="ol-icon"></span><span id="ol-name"></span></div>
+    <div id="final-runs"></div>
+    <div id="grade-msg"></div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="st-correct">0</div><div class="stat-lbl">Correct</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-wrong">0</div><div class="stat-lbl">Wickets</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-sr">0%</div><div class="stat-lbl">Accuracy</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-streak">0</div><div class="stat-lbl">Best Streak</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-sixes">0</div><div class="stat-lbl">Sixes Hit</div></div>
+      <div class="stat-box"><div class="stat-val" id="st-best">—</div><div class="stat-lbl">Top Level</div></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+      <button class="btn-next" onclick="restartSame()">🔄 SAME LANGUAGE</button>
+      <button class="btn-back" onclick="goTo('lang-screen')">🌐 NEW LANGUAGE</button>
+      <button class="btn-back" onclick="goTo('player-screen')">👤 NEW PLAYER</button>
+    </div>
+  </div>
+</div>
+
+<div id="runs-pop">SIX! 🎆</div>
+
+<script>
+// ======================== STAR FIELD ========================
+(function(){
+  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  let stars=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;stars=Array.from({length:180},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5,s:Math.random()*0.3+0.05,o:Math.random()}))}
+  function draw(){ctx.clearRect(0,0,c.width,c.height);stars.forEach(s=>{s.o+=s.s*0.015;if(s.o>1||s.o<0)s.s*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,220,255,${Math.abs(Math.sin(s.o))})`;ctx.fill()});requestAnimationFrame(draw)}
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ======================== PITCH CANVAS ========================
+const pitchCanvas=document.getElementById('pitch-canvas');
+const pCtx=pitchCanvas.getContext('2d');
+function drawPitch(){
+  const W=pitchCanvas.parentElement.offsetWidth,H=280;
+  pitchCanvas.width=W;pitchCanvas.height=H;
+  const sky=pCtx.createLinearGradient(0,0,0,H*0.55);
+  sky.addColorStop(0,'#010812');sky.addColorStop(0.5,'#0a1e38');sky.addColorStop(1,'#0d2a50');
+  pCtx.fillStyle=sky;pCtx.fillRect(0,0,W,H*0.55);
+  for(let i=0;i<W;i+=3){
+    const h=20+Math.random()*25;
+    const colors=['#c0392b','#27ae60','#f39c12','#2980b9','#8e44ad','#1abc9c'];
+    pCtx.fillStyle=colors[Math.floor(Math.random()*colors.length)];
+    pCtx.globalAlpha=0.6+Math.random()*0.35;
+    pCtx.fillRect(i,H*0.55-h,3,h);
+  }
+  pCtx.globalAlpha=1;
+  pCtx.fillStyle='#020c1a';pCtx.fillRect(0,0,W,20);
+  [[W*0.1,0],[W*0.9,0]].forEach(([x,y])=>{
+    pCtx.strokeStyle='#8ab4d4';pCtx.lineWidth=4;
+    pCtx.beginPath();pCtx.moveTo(x,H*0.5);pCtx.lineTo(x,y+10);pCtx.stroke();
+    pCtx.fillStyle='rgba(255,255,200,0.9)';pCtx.beginPath();pCtx.arc(x,y+10,6,0,Math.PI*2);pCtx.fill();
+    const gl=pCtx.createRadialGradient(x,y+10,0,x,y+10,80);
+    gl.addColorStop(0,'rgba(255,255,200,0.25)');gl.addColorStop(1,'transparent');
+    pCtx.fillStyle=gl;pCtx.beginPath();pCtx.arc(x,y+10,80,0,Math.PI*2);pCtx.fill();
+  });
+  const out=pCtx.createLinearGradient(0,H*0.55,0,H);
+  out.addColorStop(0,'#1a5e1a');out.addColorStop(1,'#0e3a0e');
+  pCtx.fillStyle=out;pCtx.fillRect(0,H*0.55,W,H*0.45);
+  for(let i=0;i<8;i++){
+    pCtx.fillStyle=i%2===0?'rgba(255,255,255,0.03)':'rgba(0,0,0,0.03)';
+    pCtx.fillRect(i*(W/8),H*0.55,W/8,H*0.45);
+  }
+  pCtx.strokeStyle='rgba(255,255,255,0.25)';pCtx.lineWidth=2;pCtx.setLineDash([8,6]);
+  pCtx.beginPath();pCtx.ellipse(W/2,H+10,W*0.42,H*0.45,0,Math.PI,0);pCtx.stroke();
+  pCtx.setLineDash([]);
+  const cx=W/2,stripW=70,stripH=175;
+  const pGrad=pCtx.createLinearGradient(cx-stripW/2,0,cx+stripW/2,0);
+  pGrad.addColorStop(0,'#c4973c');pGrad.addColorStop(0.3,'#d4a84b');pGrad.addColorStop(0.7,'#d4a84b');pGrad.addColorStop(1,'#c4973c');
+  pCtx.fillStyle=pGrad;pCtx.beginPath();pCtx.roundRect(cx-stripW/2,H-stripH,stripW,stripH,4);pCtx.fill();
+  pCtx.fillStyle='rgba(150,100,30,0.4)';
+  for(let i=0;i<6;i++){pCtx.beginPath();pCtx.ellipse(cx+(-10+Math.random()*20),H-60+i*8,3+Math.random()*6,1.5,0,0,Math.PI*2);pCtx.fill();}
+  pCtx.strokeStyle='rgba(255,255,255,0.85)';pCtx.lineWidth=2;pCtx.setLineDash([]);
+  pCtx.beginPath();pCtx.moveTo(cx-40,H-22);pCtx.lineTo(cx+40,H-22);pCtx.stroke();
+  pCtx.beginPath();pCtx.moveTo(cx-40,H-115);pCtx.lineTo(cx+40,H-115);pCtx.stroke();
+  [[H-20],[H-112]].forEach(([y])=>{
+    [-8,0,8].forEach(ox=>{
+      pCtx.fillStyle='#f5e642';pCtx.shadowColor='rgba(245,230,66,0.5)';pCtx.shadowBlur=4;
+      pCtx.fillRect(cx+ox-2,y-22,4,22);
+    });
+    pCtx.fillStyle='#f5e642';pCtx.fillRect(cx-14,y-23,28,3);
+    pCtx.shadowBlur=0;
+  });
+  pCtx.fillStyle='rgba(255,255,255,0.08)';pCtx.font='bold 10px Rajdhani';pCtx.textAlign='center';
+  pCtx.fillText('E-CODA',cx,H-80);
+}
+window.addEventListener('resize',drawPitch);
+setTimeout(drawPitch,100);
+
+// ======================== DATA ========================
+const PLAYERS=[
+  {name:"Virat Kohli",role:"Run Machine",emoji:"👑",color:"#e63946",border:"#ff6b7a",flag:"🇮🇳"},
+  {name:"MS Dhoni",role:"Captain Cool",emoji:"🧊",color:"#2ecc71",border:"#7ef59b",flag:"🇮🇳"},
+  {name:"Rohit Sharma",role:"Hitman",emoji:"💥",color:"#f5a623",border:"#ffd700",flag:"🇮🇳"},
+  {name:"Sachin Tendulkar",role:"God of Cricket",emoji:"🌟",color:"#00d4ff",border:"#7fffff",flag:"🇮🇳"},
+  {name:"Jasprit Bumrah",role:"Death Bowler",emoji:"⚡",color:"#9b59b6",border:"#d7a7ff",flag:"🇮🇳"},
+  {name:"Hardik Pandya",role:"All-Rounder",emoji:"🔥",color:"#e67e22",border:"#ffaa5e",flag:"🇮🇳"},
+  {name:"Babar Azam",role:"Modern Master",emoji:"👸",color:"#00b4d8",border:"#90e0ef",flag:"🇵🇰"},
+  {name:"Ben Stokes",role:"Test Legend",emoji:"🦁",color:"#e63946",border:"#ff9999",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+];
+
+const LANGS=[
+  {id:"python",name:"Python",icon:"🐍",desc:"Most popular language",color:"#3776ab",border:"#5ba4d4",badge:"POPULAR",badgeColor:"#00e676"},
+  {id:"javascript",name:"JavaScript",icon:"🌐",desc:"Web & Node.js",color:"#f7df1e",border:"#ffe066",badge:"WEB",badgeColor:"#f5a623"},
+  {id:"java",name:"Java",icon:"☕",desc:"Enterprise & Android",color:"#ed8b00",border:"#ffb347",badge:"CLASSIC",badgeColor:"#ed8b00"},
+  {id:"cpp",name:"C++",icon:"⚙️",desc:"Systems & performance",color:"#00599c",border:"#4db8ff",badge:"FAST",badgeColor:"#00d4ff"},
+  {id:"html",name:"HTML/CSS",icon:"🎨",desc:"Web design",color:"#e34c26",border:"#ff7a52",badge:"VISUAL",badgeColor:"#ff7a52"},
+  {id:"sql",name:"SQL",icon:"🗄️",desc:"Databases & data",color:"#336791",border:"#6fafd4",badge:"DATA",badgeColor:"#6fafd4"},
+  {id:"csharp",name:"C#",icon:"🎮",desc:"Unity & .NET",color:"#68217a",border:"#b06fc8",badge:"GAMES",badgeColor:"#b06fc8"},
+  {id:"rust",name:"Rust",icon:"🦀",desc:"Safe systems lang",color:"#b7410e",border:"#e07050",badge:"NEW",badgeColor:"#e07050"},
+];
+
+const QUESTIONS={
+// ==================== PYTHON (30 questions) ====================
+python:[
+  // BEGINNER (6)
+  {q:"What keyword is used to define a function in Python?",code:null,opts:["function","def","void","fn"],ans:1,topic:"Basics",diff:"beginner",runs:1,exp:"In Python, 'def' is the keyword to declare a function, followed by the name and parentheses."},
+  {q:"What will the following print?",code:"x = 10\nprint(x)",opts:["10","x","print(x)","Error"],ans:0,topic:"Variables",diff:"beginner",runs:1,exp:"x = 10 assigns the value 10 to x. print(x) outputs the value stored in x."},
+  {q:"Which of these is a valid Python comment?",code:null,opts:["// comment","/* comment */","# comment","<!-- comment -->"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"Python uses the # symbol for single-line comments. // is used in JS/Java/C++."},
+  {q:"How do you create a list in Python?",code:null,opts:["list = {}","list = ()","list = []","list = <>"],ans:2,topic:"Lists",diff:"beginner",runs:1,exp:"Square brackets [] are used to create a list in Python. {} is dict/set, () is tuple."},
+  {q:"What is the correct way to print 'Hello World' in Python?",code:null,opts:["echo 'Hello World'","print('Hello World')","console.log('Hello World')","printf('Hello World')"],ans:1,topic:"Basics",diff:"beginner",runs:1,exp:"print() is Python's built-in function for output. Single or double quotes both work for strings."},
+  {q:"Which data type is used to store whole numbers?",code:null,opts:["float","string","bool","int"],ans:3,topic:"Types",diff:"beginner",runs:1,exp:"int stores integer (whole) numbers in Python, like 1, 42, -7. float stores decimals like 3.14."},
+  // EASY (6)
+  {q:"What does len() return?",code:null,opts:["Prints length","Returns number of items","Creates list","Loops items"],ans:1,topic:"Functions",diff:"easy",runs:2,exp:"len() is a built-in function that returns the number of items in a sequence like a list or string."},
+  {q:"What is the output?",code:"print(2 ** 3)",opts:["6","8","5","23"],ans:1,topic:"Operators",diff:"easy",runs:2,exp:"** is the exponentiation operator in Python. 2**3 = 2×2×2 = 8."},
+  {q:"Which data type stores True or False?",code:null,opts:["String","Integer","Boolean","Float"],ans:2,topic:"Types",diff:"easy",runs:2,exp:"Boolean is the data type for True/False values. In Python: bool, values are True and False (capitalised)."},
+  {q:"What does the range(5) function produce?",code:null,opts:["1 to 5","0 to 5","0 to 4","1 to 4"],ans:2,topic:"Loops",diff:"easy",runs:2,exp:"range(5) generates numbers 0, 1, 2, 3, 4 — it starts at 0 and stops BEFORE 5."},
+  {q:"How do you convert a string '42' to an integer in Python?",code:null,opts:["integer('42')","int('42')","num('42')","parse('42')"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"int() converts a compatible string or float to an integer. int('42') gives 42."},
+  {q:"What is the output?",code:"x = 'cricket'\nprint(x[0])",opts:["c","cricket","x","Error"],ans:0,topic:"Strings",diff:"easy",runs:2,exp:"Strings are indexed starting from 0. x[0] is the first character, 'c'."},
+  // MEDIUM (6)
+  {q:"What does this print?",code:"nums = [1,2,3,4,5]\nprint(nums[2])",opts:["2","3","1","Error"],ans:1,topic:"Lists",diff:"medium",runs:4,exp:"Python lists are 0-indexed. Index 0→1, 1→2, 2→3. So nums[2] is 3."},
+  {q:"What does the 'in' keyword do?",code:"fruits = ['apple','mango']\nprint('mango' in fruits)",opts:["Adds item","Removes item","Checks membership","Loops list"],ans:2,topic:"Lists",diff:"medium",runs:4,exp:"'in' tests whether a value exists in a sequence. Returns True or False."},
+  {q:"What is the output?",code:"x = 'cricket'\nprint(x.upper())",opts:["cricket","CRICKET","Cricket","Error"],ans:1,topic:"Strings",diff:"medium",runs:4,exp:".upper() is a string method that returns all characters converted to uppercase."},
+  {q:"What keyword skips the rest of a loop iteration?",code:null,opts:["skip","break","pass","continue"],ans:3,topic:"Loops",diff:"medium",runs:4,exp:"continue skips the remaining code in the current loop iteration and moves to the next iteration."},
+  {q:"What is the output of this code?",code:"d = {'a':1, 'b':2}\nprint(d['b'])",opts:["1","2","b","Error"],ans:1,topic:"Dicts",diff:"medium",runs:4,exp:"Dictionaries use keys to access values. d['b'] retrieves the value associated with key 'b', which is 2."},
+  {q:"What does the zip() function do?",code:null,opts:["Compresses files","Combines multiple iterables element-wise","Sorts a list","Removes duplicates"],ans:1,topic:"Functions",diff:"medium",runs:4,exp:"zip() combines multiple iterables into an iterator of tuples. zip([1,2],[3,4]) gives (1,3),(2,4)."},
+  // HARD (6)
+  {q:"What is a list comprehension?",code:"evens = [x for x in range(10) if x%2==0]",opts:["A loop statement","Compact syntax to build a list","A function call","Dictionary method"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"List comprehensions provide a concise way to create lists. This creates [0,2,4,6,8]."},
+  {q:"What does *args allow in a function?",code:"def show(*args):\n    print(args)",opts:["One argument only","Any number of keyword args","Any number of positional args","A list argument"],ans:2,topic:"Functions",diff:"hard",runs:6,exp:"*args packs extra positional arguments into a tuple, allowing functions to accept variable numbers of arguments."},
+  {q:"What does this decorator do?",code:"@staticmethod\ndef add(a, b):\n    return a + b",opts:["Makes method private","Binds method to class instance","Creates method without self/cls","Caches the result"],ans:2,topic:"OOP",diff:"hard",runs:6,exp:"@staticmethod declares a method that doesn't receive the instance (self) or class (cls) as the first argument."},
+  {q:"What will this code output?",code:"x = [1, 2, 3]\ny = x\ny.append(4)\nprint(x)",opts:["[1, 2, 3]","[1, 2, 3, 4]","[4]","Error"],ans:1,topic:"References",diff:"hard",runs:6,exp:"y = x creates a reference, not a copy. Both x and y point to the same list, so appending to y also changes x."},
+  {q:"What does **kwargs collect?",code:"def greet(**kwargs):\n    print(kwargs)",opts:["Positional args as list","Keyword args as dict","All arguments","Only default args"],ans:1,topic:"Functions",diff:"hard",runs:6,exp:"**kwargs collects arbitrary keyword arguments into a dictionary. greet(name='Ali') gives {'name': 'Ali'}."},
+  {q:"What is the output?",code:"print(list(map(lambda x: x*2, [1,2,3])))",opts:["[1,2,3]","[2,4,6]","None","Error"],ans:1,topic:"Functional",diff:"hard",runs:6,exp:"map() applies a function to every element. lambda x: x*2 doubles each value. list() converts the map object to [2,4,6]."},
+  // EXPERT (6)
+  {q:"What is the time complexity of dict lookup in Python?",code:null,opts:["O(n)","O(log n)","O(1) average","O(n²)"],ans:2,topic:"DSA",diff:"expert",runs:6,exp:"Python dicts use hash tables, giving O(1) average-case lookup. Worst case is O(n) due to hash collisions."},
+  {q:"What does the walrus operator := do?",code:"if n := len(data):\n    print(n)",opts:["Compares values","Assigns and returns value","Creates a copy","Swaps values"],ans:1,topic:"Advanced",diff:"expert",runs:6,exp:"The walrus operator := (Python 3.8+) assigns a value to a variable as part of an expression."},
+  {q:"What is a generator in Python?",code:"def gen():\n    yield 1\n    yield 2",opts:["A class that creates objects","A function that returns values lazily using yield","A list factory","A type of decorator"],ans:1,topic:"Generators",diff:"expert",runs:6,exp:"Generators use yield instead of return to produce values lazily — one at a time. They save memory for large datasets."},
+  {q:"What does __slots__ do in a Python class?",code:null,opts:["Limits inheritance","Restricts attribute names and saves memory","Enables multiple inheritance","Creates class methods"],ans:1,topic:"OOP",diff:"expert",runs:6,exp:"__slots__ restricts attribute creation to a fixed list, reducing memory usage by avoiding a per-instance __dict__."},
+  {q:"What is the Global Interpreter Lock (GIL)?",code:null,opts:["A security lock","A mutex preventing multiple threads from running Python bytecode simultaneously","A memory allocator","A garbage collection mechanism"],ans:1,topic:"Concurrency",diff:"expert",runs:6,exp:"The GIL is a mutex in CPython that allows only one thread to execute Python bytecode at a time, limiting true thread parallelism."},
+  {q:"What does functools.lru_cache do?",code:"@functools.lru_cache(maxsize=128)\ndef fib(n):\n    return fib(n-1)+fib(n-2)",opts:["Limits recursion depth","Memoizes function results to avoid recomputation","Creates a thread-safe cache","Logs function calls"],ans:1,topic:"Advanced",diff:"expert",runs:6,exp:"lru_cache memoizes (caches) function return values. Same inputs return cached results instantly instead of recomputing."},
+],
+
+// ==================== JAVASCRIPT (30 questions) ====================
+javascript:[
+  // BEGINNER (6)
+  {q:"Which keyword declares a variable that cannot be reassigned?",code:null,opts:["var","let","const","static"],ans:2,topic:"Variables",diff:"beginner",runs:1,exp:"const declares a block-scoped variable that cannot be reassigned after declaration (though objects can be mutated)."},
+  {q:"What does console.log() do?",code:null,opts:["Creates a variable","Prints to browser console","Returns a value","Defines a function"],ans:1,topic:"Basics",diff:"beginner",runs:1,exp:"console.log() outputs messages to the browser's developer console — crucial for debugging."},
+  {q:"How do you write a single-line comment in JavaScript?",code:null,opts:["# comment","<!-- comment -->","// comment","/* comment */"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"// is the single-line comment syntax in JavaScript. /* */ is for multi-line comments."},
+  {q:"What is the correct syntax to create a function in JavaScript?",code:null,opts:["def myFunc(){}","function myFunc(){}","fn myFunc(){}","void myFunc(){}"],ans:1,topic:"Functions",diff:"beginner",runs:1,exp:"The function keyword followed by a name and parentheses defines a function in JavaScript."},
+  {q:"What data type is the result of: typeof 42?",code:null,opts:["int","integer","number","numeric"],ans:2,topic:"Types",diff:"beginner",runs:1,exp:"JavaScript uses 'number' for all numeric values (integers and decimals). typeof 42 returns 'number'."},
+  {q:"How do you access an HTML element by its ID?",code:null,opts:["document.getElement('id')","document.getElementById('id')","document.query('id')","document.find('#id')"],ans:1,topic:"DOM",diff:"beginner",runs:1,exp:"document.getElementById() finds and returns the element with the specified ID attribute."},
+  // EASY (6)
+  {q:"What is the output?",code:"let x = 5;\nlet y = \"5\";\nconsole.log(x == y);",opts:["true","false","Error","undefined"],ans:0,topic:"Equality",diff:"easy",runs:2,exp:"== does type coercion. 5 == '5' is true because JS converts '5' to number 5. Use === for strict equality."},
+  {q:"What does === check?",code:null,opts:["Value only","Value and type","Reference only","Type only"],ans:1,topic:"Operators",diff:"easy",runs:2,exp:"=== (strict equality) checks both value AND type without coercion. 5 === '5' is false."},
+  {q:"What is the output of this code?",code:"console.log(Boolean(0));",opts:["true","false","0","NaN"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"0 is a falsy value in JavaScript. Boolean(0) returns false. Other falsy values: '', null, undefined, NaN."},
+  {q:"Which array method adds an element to the END?",code:null,opts:["unshift()","push()","append()","add()"],ans:1,topic:"Arrays",diff:"easy",runs:2,exp:"push() adds one or more elements to the end of an array and returns the new length."},
+  {q:"What does the ternary operator do?",code:"let result = age >= 18 ? 'adult' : 'minor';",opts:["A loop shorthand","A short if/else expression","A type conversion","An equality check"],ans:1,topic:"Operators",diff:"easy",runs:2,exp:"The ternary operator (condition ? val1 : val2) is a compact if/else. Here: if age >= 18 return 'adult', else 'minor'."},
+  {q:"What does typeof null return?",code:null,opts:["null","object","undefined","NaN"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"typeof null returns 'object' — this is a historical bug in JavaScript kept for backward compatibility."},
+  // MEDIUM (6)
+  {q:"What is a closure?",code:null,opts:["A type of loop","A function with access to outer scope vars","A CSS property","An error handler"],ans:1,topic:"Functions",diff:"medium",runs:4,exp:"A closure is a function that 'remembers' variables from its outer (enclosing) scope even after the outer function has returned."},
+  {q:"What does Array.map() return?",code:"[1,2,3].map(x => x * 2)",opts:["undefined","The original array","A new array","A sum"],ans:2,topic:"Arrays",diff:"medium",runs:4,exp:"map() creates and returns a NEW array with results of calling the provided function on each element."},
+  {q:"What is the difference between null and undefined?",code:null,opts:["No difference","null is assigned; undefined means not yet assigned","undefined is assigned; null means missing","Both are the same type"],ans:1,topic:"Types",diff:"medium",runs:4,exp:"null is an intentional absence of value (explicitly assigned). undefined means a variable has been declared but not yet assigned a value."},
+  {q:"What does Array.filter() do?",code:"[1,2,3,4].filter(x => x > 2)",opts:["Removes all elements","Returns elements that pass a test","Sorts the array","Returns a count"],ans:1,topic:"Arrays",diff:"medium",runs:4,exp:"filter() creates a new array with all elements that pass the provided test function. Here: [3, 4]."},
+  {q:"What is the output?",code:"console.log(1 + '2');",opts:["3","'12'","12","Error"],ans:2,topic:"Types",diff:"medium",runs:4,exp:"When + is used with a number and a string, JS coerces the number to a string and concatenates. 1 + '2' = '12'."},
+  {q:"What does the spread operator ... do?",code:"const a=[1,2];\nconst b=[...a,3,4];",opts:["Creates a loop","Expands iterable into elements","Defines rest params","Copies by reference"],ans:1,topic:"ES6",diff:"medium",runs:4,exp:"Spread (...) expands an iterable (array/string) into individual elements. b becomes [1,2,3,4]."},
+  // HARD (6)
+  {q:"What does async/await do?",code:null,opts:["Makes code run faster","Handles synchronous code","Simplifies Promise handling","Creates web workers"],ans:2,topic:"Async",diff:"hard",runs:6,exp:"async/await is syntactic sugar over Promises that lets you write asynchronous code that reads like synchronous code."},
+  {q:"What is event bubbling?",code:null,opts:["DOM loading event","Event propagating from child to parent","Creating new events","Event loop cycle"],ans:1,topic:"DOM",diff:"hard",runs:6,exp:"Event bubbling means an event on a child element 'bubbles up' to its parent elements in the DOM tree."},
+  {q:"What is the output of this Promise chain?",code:"Promise.resolve(1)\n  .then(x => x + 1)\n  .then(x => x * 2)\n  .then(console.log);",opts:["2","3","4","undefined"],ans:2,topic:"Async",diff:"hard",runs:6,exp:"Resolved with 1, then +1=2, then *2=4. Each .then returns a new Promise with the return value."},
+  {q:"What is prototypal inheritance in JavaScript?",code:null,opts:["A class-based system","Objects inherit directly from other objects via prototype chain","A copy mechanism","A module system"],ans:1,topic:"OOP",diff:"hard",runs:6,exp:"JS uses prototypal inheritance — objects have a [[Prototype]] link to another object. Properties are looked up the chain."},
+  {q:"What does Object.freeze() do?",code:null,opts:["Deletes the object","Prevents adding/modifying/deleting properties","Makes a deep copy","Seals the prototype"],ans:1,topic:"Objects",diff:"hard",runs:6,exp:"Object.freeze() prevents any changes to an object — no additions, deletions, or property modifications. Shallow freeze only."},
+  {q:"What is a WeakMap in JavaScript?",code:null,opts:["A regular Map with weak keys","A Map that holds only object keys and doesn't prevent garbage collection","A read-only Map","A Map with limited size"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"WeakMap holds key-value pairs where keys must be objects. Keys are weakly referenced — they can be garbage collected."},
+  // EXPERT (6)
+  {q:"What is the output?",code:"console.log(typeof null);",opts:["null","object","undefined","NaN"],ans:1,topic:"Types",diff:"expert",runs:6,exp:"typeof null returns 'object' — this is a historical bug in JavaScript kept for backward compatibility."},
+  {q:"What does the Symbol primitive type do?",code:null,opts:["Creates numeric IDs","Creates unique, non-string identifiers","Represents null safely","Converts types"],ans:1,topic:"ES6",diff:"expert",runs:6,exp:"Symbol() creates a guaranteed unique identifier. Symbol('a') !== Symbol('a'). Used for unique object property keys."},
+  {q:"What is the event loop in JavaScript?",code:null,opts:["A for loop for events","A mechanism to handle async callbacks after the call stack empties","A built-in timer","An event listener"],ans:1,topic:"Runtime",diff:"expert",runs:6,exp:"The event loop monitors the call stack and callback queue. When the stack is empty, it pushes the next callback, enabling async JS."},
+  {q:"What does structuredClone() do?",code:null,opts:["Clones a class","Creates a deep copy of an object","Clones DOM nodes","Copies functions"],ans:1,topic:"Objects",diff:"expert",runs:6,exp:"structuredClone() (ES2022) creates a deep clone of an object, including nested structures. Unlike spread, it handles deep nesting."},
+  {q:"What is tree shaking in JavaScript bundlers?",code:null,opts:["A DOM traversal technique","Dead code elimination based on ES module imports","A CSS optimization","A testing technique"],ans:1,topic:"Build Tools",diff:"expert",runs:6,exp:"Tree shaking removes unused exports from your bundle. Bundlers like Webpack/Rollup analyze import/export to eliminate dead code."},
+  {q:"What is the output of this code?",code:"const obj = {a: 1};\nconst {a, b = 2} = obj;\nconsole.log(a, b);",opts:["1 undefined","1 2","Error","undefined 2"],ans:1,topic:"Destructuring",diff:"expert",runs:6,exp:"Destructuring with default values: a gets 1 from obj. b is not in obj, so it falls back to the default value 2."},
+],
+
+// ==================== JAVA (30 questions) ====================
+java:[
+  // BEGINNER (6)
+  {q:"What is the correct way to declare a string in Java?",code:null,opts:["string name = 'hi';","String name = 'hi';","String name = \"hi\";","str name = \"hi\";"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"In Java, String (capital S) is the class. Strings use double quotes. Single quotes are for char."},
+  {q:"Which method is the entry point of a Java program?",code:null,opts:["start()","main()","init()","run()"],ans:1,topic:"Basics",diff:"beginner",runs:1,exp:"public static void main(String[] args) is the entry point JVM looks for to start execution."},
+  {q:"How do you print to the console in Java?",code:null,opts:["print('Hello')","console.log('Hello')","System.out.println('Hello')","System.out.println(\"Hello\")"],ans:3,topic:"I/O",diff:"beginner",runs:1,exp:"System.out.println() prints a line to standard output. It uses double quotes for strings in Java."},
+  {q:"Which keyword creates a new object in Java?",code:null,opts:["create","new","make","object"],ans:1,topic:"OOP",diff:"beginner",runs:1,exp:"The new keyword allocates memory for a new object and calls its constructor."},
+  {q:"What is the correct way to declare an integer variable in Java?",code:null,opts:["integer x = 5;","int x = 5;","var x = 5;","number x = 5;"],ans:1,topic:"Types",diff:"beginner",runs:1,exp:"int is the primitive type for integers in Java. It holds 32-bit whole numbers from -2^31 to 2^31-1."},
+  {q:"Which symbol is used to end a statement in Java?",code:null,opts:[":",".",";","!"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"Java statements end with a semicolon (;). This tells the compiler where one statement ends."},
+  // EASY (6)
+  {q:"What does 'static' mean in Java?",code:null,opts:["Private method","Cannot be changed","Belongs to class not instance","Abstract method"],ans:2,topic:"OOP",diff:"easy",runs:2,exp:"static means the member belongs to the class itself, not to instances. You can call it without creating an object."},
+  {q:"What does the 'final' keyword do to a variable?",code:null,opts:["Makes it public","Prevents reassignment","Stores it statically","Makes it nullable"],ans:1,topic:"Keywords",diff:"easy",runs:2,exp:"final on a variable means its value cannot be changed once assigned. It's like a constant."},
+  {q:"Which collection allows duplicate values in Java?",code:null,opts:["Set","HashSet","TreeSet","ArrayList"],ans:3,topic:"Collections",diff:"easy",runs:2,exp:"ArrayList allows duplicates. Set implementations (HashSet, TreeSet) do not allow duplicate elements."},
+  {q:"What does the length property give for an array?",code:"int[] arr = {1, 2, 3};\nSystem.out.println(arr.length);",opts:["2","3","4","Error"],ans:1,topic:"Arrays",diff:"easy",runs:2,exp:"arr.length gives the number of elements. Arrays use .length (field, not method). Strings use .length()."},
+  {q:"What is method overloading in Java?",code:null,opts:["Two classes with the same name","Multiple methods with same name but different parameters","Overriding a parent method","Making a method static"],ans:1,topic:"OOP",diff:"easy",runs:2,exp:"Overloading lets you define multiple methods with the same name but different parameter lists. The compiler picks the right one."},
+  {q:"What is the difference between == and .equals() for Strings?",code:null,opts:["No difference","== checks reference; .equals() checks content","== checks content; .equals() checks reference","Both check content"],ans:1,topic:"Strings",diff:"easy",runs:2,exp:"== compares object references (memory addresses). .equals() compares the actual string content. Use .equals() for strings!"},
+  // MEDIUM (6)
+  {q:"What is autoboxing?",code:null,opts:["Wrapping code in try-catch","Auto-converting primitives to wrapper objects","Array resizing","Interface implementation"],ans:1,topic:"Types",diff:"medium",runs:4,exp:"Autoboxing is automatic conversion between primitives (int) and their wrapper classes (Integer)."},
+  {q:"What does ArrayList differ from array?",code:null,opts:["ArrayList is faster","ArrayList can grow dynamically","ArrayList stores primitives","No difference"],ans:1,topic:"Collections",diff:"medium",runs:4,exp:"ArrayList is a resizable array that can grow/shrink. Regular arrays have fixed size."},
+  {q:"What is an interface in Java?",code:null,opts:["A type of class","A contract defining methods a class must implement","A final class","A static class"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"An interface defines a contract — abstract methods that implementing classes must provide. Java 8+ allows default methods."},
+  {q:"What is the purpose of the 'throws' keyword?",code:"public void read() throws IOException {}",opts:["Catches exceptions","Declares checked exceptions a method may throw","Creates custom exceptions","Ignores exceptions"],ans:1,topic:"Exceptions",diff:"medium",runs:4,exp:"throws declares that a method may throw checked exceptions. Callers must handle or propagate them with try-catch or throws."},
+  {q:"What does HashMap store?",code:null,opts:["Only values","Only keys","Key-value pairs with O(1) average access","An ordered list"],ans:2,topic:"Collections",diff:"medium",runs:4,exp:"HashMap stores key-value pairs using hashing for O(1) average get/put operations. Keys are unique; values can duplicate."},
+  {q:"What is the difference between abstract class and interface?",code:null,opts:["No difference","Abstract class can have state/constructors; interface cannot (pre-Java 8)","Interface has state; abstract doesn't","Abstract is faster"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"Abstract classes can have fields, constructors, and concrete methods. Interfaces (pre-Java 8) only had abstract methods. Java 8 added default/static methods to interfaces."},
+  // HARD (6)
+  {q:"What is the purpose of the 'final' keyword on a class?",code:null,opts:["Creates abstract class","Makes variable/method/class non-overridable","Imports packages","Handles exceptions"],ans:1,topic:"Keywords",diff:"hard",runs:6,exp:"final on a variable = can't reassign. On a method = can't override. On a class = can't extend."},
+  {q:"What is a functional interface?",code:null,opts:["Interface with many methods","Interface with exactly one abstract method","A lambda function","Static interface"],ans:1,topic:"Functional",diff:"hard",runs:6,exp:"A functional interface has exactly one abstract method — enables lambda expressions. E.g., Runnable, Comparator."},
+  {q:"What does Stream.filter() return?",code:null,opts:["A filtered list","A new Stream","null","boolean"],ans:1,topic:"Streams",diff:"hard",runs:6,exp:"filter() is a lazy intermediate operation that returns a new Stream containing only elements matching the predicate."},
+  {q:"What is the difference between HashMap and TreeMap?",code:null,opts:["No difference","HashMap is unordered O(1); TreeMap is sorted O(log n)","TreeMap is faster","HashMap is sorted"],ans:1,topic:"Collections",diff:"hard",runs:6,exp:"HashMap offers O(1) average for get/put but no order. TreeMap maintains natural key order with O(log n) operations."},
+  {q:"What is the volatile keyword in Java?",code:null,opts:["Makes variable constant","Ensures variable is read from main memory, not thread cache","Makes variable thread-local","Prevents variable from being serialized"],ans:1,topic:"Concurrency",diff:"hard",runs:6,exp:"volatile ensures all threads see the latest value of a variable by reading from main memory, preventing stale cached copies."},
+  {q:"What does the synchronized keyword do?",code:null,opts:["Speeds up methods","Prevents two threads from executing the method/block simultaneously","Makes a method static","Copies objects safely"],ans:1,topic:"Concurrency",diff:"hard",runs:6,exp:"synchronized ensures only one thread can execute a method or block at a time, preventing race conditions."},
+  // EXPERT (6)
+  {q:"What is garbage collection in Java?",code:null,opts:["Manual memory deallocation","Automatic memory management that reclaims unused objects","A sorting algorithm","A design pattern"],ans:1,topic:"Memory",diff:"expert",runs:6,exp:"Java's GC automatically identifies and frees memory occupied by objects no longer reachable, using algorithms like mark-and-sweep."},
+  {q:"What is the diamond problem and how does Java solve it?",code:null,opts:["A memory leak; solved by GC","Ambiguous multiple inheritance; Java prevents it by disallowing multiple class inheritance","A null pointer issue; solved by Optional","A deadlock; solved by synchronized"],ans:1,topic:"OOP",diff:"expert",runs:6,exp:"The diamond problem: if class D extends B and C, and both extend A with same method, which version does D get? Java prevents this by only allowing single class inheritance. Interfaces with default methods use explicit override resolution."},
+  {q:"What is the CompletableFuture used for?",code:null,opts:["Synchronous processing","Asynchronous, non-blocking programming with chaining","Thread creation","Timer scheduling"],ans:1,topic:"Async",diff:"expert",runs:6,exp:"CompletableFuture enables asynchronous programming with chainable callbacks. It can run tasks in parallel and combine results."},
+  {q:"What is a Java memory leak?",code:null,opts:["An out-of-memory error","When objects are still referenced but never used, preventing GC","When threads stall","When stack overflows"],ans:1,topic:"Memory",diff:"expert",runs:6,exp:"A memory leak occurs when objects are still reachable (referenced) but not actually needed, so GC can't free them. Common in static collections holding objects."},
+  {q:"What is the difference between Comparable and Comparator?",code:null,opts:["No difference","Comparable defines natural ordering on the class; Comparator is external custom ordering","Comparator is built-in; Comparable is custom","Comparable is faster"],ans:1,topic:"Collections",diff:"expert",runs:6,exp:"Comparable (compareTo) defines the class's natural order. Comparator (compare) is an external strategy for custom sorting, allowing multiple sort orders."},
+  {q:"What does JIT compilation do in the JVM?",code:null,opts:["Interprets bytecode every time","Compiles frequently-run bytecode to native machine code at runtime for faster execution","Validates bytecode","Manages garbage collection"],ans:1,topic:"JVM",diff:"expert",runs:6,exp:"JIT (Just-In-Time) compiler monitors hot code paths and compiles them to native machine code, dramatically speeding up repeated execution."},
+],
+
+// ==================== C++ (30 questions) ====================
+cpp:[
+  // BEGINNER (6)
+  {q:"What is the correct syntax to include a standard library in C++?",code:null,opts:["import iostream;","#include<iostream>","require iostream;","use iostream;"],ans:1,topic:"Syntax",diff:"beginner",runs:1,exp:"C++ uses preprocessor directives starting with #. #include<iostream> brings in the input/output stream library."},
+  {q:"What does cout << mean?",code:null,opts:["Input operator","Bitwise shift","Output to console","Comparison"],ans:2,topic:"I/O",diff:"beginner",runs:1,exp:"cout is the standard output stream. << is the insertion operator that sends data to cout."},
+  {q:"How do you declare an integer variable in C++?",code:null,opts:["integer x = 5;","var x = 5;","int x = 5;","number x = 5;"],ans:2,topic:"Variables",diff:"beginner",runs:1,exp:"int declares an integer variable in C++. All statements end with a semicolon."},
+  {q:"What does cin >> do?",code:null,opts:["Outputs to console","Reads input from user","Compares values","Creates a stream"],ans:1,topic:"I/O",diff:"beginner",runs:1,exp:"cin is the standard input stream. >> is the extraction operator that reads data from cin into a variable."},
+  {q:"How do you write a comment in C++?",code:null,opts:["# comment","<!-- comment -->","// comment","** comment **"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"// is the single-line comment syntax in C++. /* */ is for multi-line comments. # is used in C preprocessor directives."},
+  {q:"What is the correct way to end a C++ statement?",code:null,opts:[":",".",";","->"],ans:2,topic:"Syntax",diff:"beginner",runs:1,exp:"All C++ statements must end with a semicolon (;). Missing semicolons cause compile errors."},
+  // EASY (6)
+  {q:"What is a pointer in C++?",code:null,opts:["A type of loop","A variable storing a memory address","A class method","A reference type"],ans:1,topic:"Pointers",diff:"easy",runs:2,exp:"A pointer stores the memory address of another variable. int* ptr = &x; stores the address of x."},
+  {q:"What does & mean when used in a declaration?",code:"int& ref = x;",opts:["Bitwise AND","Creates a reference to a variable","Gets memory address","Dereferences pointer"],ans:1,topic:"References",diff:"easy",runs:2,exp:"& in a declaration creates a reference — an alias for an existing variable. Changing ref also changes x."},
+  {q:"What is the difference between struct and class in C++?",code:null,opts:["No difference","struct defaults to public; class defaults to private","class is faster","struct cannot have methods"],ans:1,topic:"OOP",diff:"easy",runs:2,exp:"The only difference is default access: struct members are public by default, class members are private by default."},
+  {q:"What does the -> operator do?",code:"ptr->name;",opts:["Subtraction","Accesses member via pointer (dereferences + accesses)","Creates pointer","Compares values"],ans:1,topic:"Pointers",diff:"easy",runs:2,exp:"ptr->name is shorthand for (*ptr).name — dereferences the pointer and accesses the member."},
+  {q:"What is a namespace in C++?",code:"using namespace std;",opts:["A file system","A scope that organizes code and avoids name conflicts","A type of class","A preprocessor directive"],ans:1,topic:"Namespaces",diff:"easy",runs:2,exp:"Namespaces group related code and prevent naming conflicts. 'using namespace std;' lets you use cout instead of std::cout."},
+  {q:"What is function overloading?",code:null,opts:["Calling a function twice","Multiple functions with same name but different parameter types/counts","Override a virtual function","A recursion technique"],ans:1,topic:"Functions",diff:"easy",runs:2,exp:"Function overloading allows multiple functions with the same name but different signatures. Compiler selects based on argument types."},
+  // MEDIUM (6)
+  {q:"What does new operator do?",code:null,opts:["Creates class","Allocates memory on heap","Declares a variable","Creates a pointer"],ans:1,topic:"Memory",diff:"medium",runs:4,exp:"new dynamically allocates memory on the heap and returns a pointer to it. Remember to delete to avoid leaks!"},
+  {q:"What is a destructor?",code:null,opts:["Deletes class file","Special method called when object is destroyed","A delete function","Error handler"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"Destructor (~ClassName) is called automatically when an object goes out of scope or is deleted. Used to free resources."},
+  {q:"What is the virtual keyword used for?",code:"virtual void speak() {}",opts:["Makes function inline","Enables runtime polymorphism via override in derived classes","Makes function static","Creates abstract class"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"virtual enables runtime polymorphism. A derived class can override a virtual method and it'll be called via a base pointer."},
+  {q:"What does delete do in C++?",code:"int* p = new int(5);\ndelete p;",opts:["Removes a variable","Frees heap memory allocated by new","Calls destructor only","Zeros the memory"],ans:1,topic:"Memory",diff:"medium",runs:4,exp:"delete frees heap memory allocated by new and calls the object's destructor. delete[] frees arrays."},
+  {q:"What is a template in C++?",code:"template<typename T>\nT add(T a, T b) { return a + b; }",opts:["A header file","Generic code that works with any type","A base class","A preprocessor macro"],ans:1,topic:"Templates",diff:"medium",runs:4,exp:"Templates enable generic programming — write code once that works with any type. The compiler generates type-specific versions."},
+  {q:"What is the difference between stack and heap memory?",code:null,opts:["No difference","Stack is automatic/fast/limited; heap is manual/flexible/larger","Heap is faster","Stack is for objects only"],ans:1,topic:"Memory",diff:"medium",runs:4,exp:"Stack: automatic, fast, fixed size, for local vars. Heap: manual (new/delete), flexible size, for dynamic objects. Stack overflow is common risk."},
+  // HARD (6)
+  {q:"What is RAII?",code:null,opts:["A design pattern","Resource acquisition is initialization — ties resource lifetime to object lifetime","A type system","A loop pattern"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"RAII (Resource Acquisition Is Initialization) means resources are managed by object lifetimes — acquired in constructor, released in destructor."},
+  {q:"What is a smart pointer?",code:"std::unique_ptr<int> p = std::make_unique<int>(5);",opts:["A faster raw pointer","An object that manages heap memory and auto-deletes it","A const pointer","A pointer to a pointer"],ans:1,topic:"Memory",diff:"hard",runs:6,exp:"Smart pointers (unique_ptr, shared_ptr) wrap raw pointers and automatically free memory when they go out of scope — preventing leaks."},
+  {q:"What is move semantics in C++?",code:null,opts:["Moving variables between scopes","Transferring ownership of resources without copying","A pointer technique","A sorting method"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"Move semantics (C++11) allow resources to be transferred from a temporary object instead of copied, dramatically improving performance."},
+  {q:"What does the const keyword mean on a method?",code:"int getAge() const {}",opts:["Method is static","Method cannot modify class members","Method is private","Method is inline"],ans:1,topic:"OOP",diff:"hard",runs:6,exp:"const on a method guarantees it won't modify any member variables of the class (except mutable ones)."},
+  {q:"What is operator overloading?",code:null,opts:["Overriding a virtual function","Defining custom behaviour for operators like +, == on user-defined types","A template specialization","Function overloading"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"Operator overloading lets you define what +, -, ==, etc. mean for your custom classes."},
+  {q:"What is the difference between shallow and deep copy?",code:null,opts:["No difference","Shallow copies pointers; deep copies the pointed-to data","Deep copy is faster","Shallow copy uses more memory"],ans:1,topic:"Memory",diff:"hard",runs:6,exp:"Shallow copy copies pointer values (both point to same data). Deep copy allocates new memory and copies the actual data."},
+  // EXPERT (6)
+  {q:"What is undefined behavior in C++?",code:null,opts:["A compile-time error","Code whose result is unpredictable and implementation-defined — could crash, corrupt data, or seem to work","A runtime exception","A null pointer"],ans:1,topic:"Advanced",diff:"expert",runs:6,exp:"Undefined behavior means the C++ standard places no requirements on the result. Examples: out-of-bounds access, signed overflow, use-after-free."},
+  {q:"What is the vtable in C++?",code:null,opts:["A variable table","A hidden table of function pointers enabling virtual dispatch","A hash table","A memory table"],ans:1,topic:"OOP",diff:"expert",runs:6,exp:"vtable is a hidden array of function pointers per class with virtual methods. Each object has a vptr pointing to it, enabling runtime polymorphism."},
+  {q:"What is SFINAE in C++?",code:null,opts:["A memory model","Substitution Failure Is Not An Error — template instantiation failure silently removes overload from candidates","A compiler flag","An OOP principle"],ans:1,topic:"Templates",diff:"expert",runs:6,exp:"SFINAE allows template overloads to be excluded from consideration when their substitution fails, enabling type-based compile-time selection."},
+  {q:"What does std::move() do?",code:null,opts:["Physically moves memory","Casts a value to an rvalue reference to enable move semantics","Copies an object","Swaps two values"],ans:1,topic:"Advanced",diff:"expert",runs:6,exp:"std::move() casts to rvalue reference, signaling the resource can be 'stolen' by a move constructor/assignment instead of copied."},
+  {q:"What is a lambda expression in C++?",code:"auto add = [](int a, int b) { return a + b; };",opts:["A recursion technique","An anonymous inline function object (closure)","A template parameter","A type alias"],ans:1,topic:"Functional",diff:"expert",runs:6,exp:"Lambda expressions (C++11) create anonymous function objects inline. They can capture surrounding variables via [=] or [&]."},
+  {q:"What is std::atomic used for?",code:null,opts:["Chemical operations","Thread-safe operations on a variable without explicit locks","Memory allocation","Type casting"],ans:1,topic:"Concurrency",diff:"expert",runs:6,exp:"std::atomic provides lock-free, thread-safe operations on individual variables. Useful for counters and flags in multithreaded code."},
+],
+
+// ==================== HTML/CSS (30 questions) ====================
+html:[
+  // BEGINNER (6)
+  {q:"What does HTML stand for?",code:null,opts:["Hyper Text Markup Language","High Tech Modern Language","Hyper Transfer Markup Logic","Home Tool Markup Language"],ans:0,topic:"Basics",diff:"beginner",runs:1,exp:"HTML = HyperText Markup Language. It's the standard language for creating web pages."},
+  {q:"Which tag creates the largest heading?",code:null,opts:["<h6>","<heading>","<h1>","<head>"],ans:2,topic:"HTML",diff:"beginner",runs:1,exp:"<h1> is the largest heading (most important). Headings go from <h1> (largest) to <h6> (smallest)."},
+  {q:"Which HTML tag is used to create a hyperlink?",code:null,opts:["<link>","<href>","<a>","<url>"],ans:2,topic:"HTML",diff:"beginner",runs:1,exp:"<a href='url'> creates a hyperlink. 'a' stands for anchor. The href attribute specifies the destination URL."},
+  {q:"What does the <img> tag's src attribute do?",code:null,opts:["Sets image size","Specifies the image file path/URL","Adds alt text","Sets image style"],ans:1,topic:"HTML",diff:"beginner",runs:1,exp:"The src (source) attribute of <img> specifies the path or URL of the image to display."},
+  {q:"Which tag is used to create an unordered list?",code:null,opts:["<ol>","<list>","<ul>","<li>"],ans:2,topic:"HTML",diff:"beginner",runs:1,exp:"<ul> creates an unordered (bulleted) list. <ol> creates an ordered (numbered) list. <li> defines list items."},
+  {q:"Where is CSS typically placed in an HTML document?",code:null,opts:["In the <body>","Inside <script>","In the <head> inside <style>","After </html>"],ans:2,topic:"CSS",diff:"beginner",runs:1,exp:"CSS goes inside <style> tags within the <head> section. You can also link an external .css file using <link> in <head>."},
+  // EASY (6)
+  {q:"What does this CSS rule do?",code:"div {\n  display: flex;\n  justify-content: center;\n}",opts:["Hides the div","Centers content horizontally","Creates a grid","Adds border"],ans:1,topic:"CSS",diff:"easy",runs:2,exp:"display:flex makes div a flex container. justify-content:center aligns flex items along the main axis (horizontal by default)."},
+  {q:"What is the CSS selector for an element with class 'btn'?",code:null,opts:["#btn","btn",".btn","*btn"],ans:2,topic:"CSS",diff:"easy",runs:2,exp:".btn selects elements with class='btn'. # selects by ID. Element selectors use just the tag name like div or p."},
+  {q:"What does the HTML alt attribute on an image do?",code:null,opts:["Sets image title","Provides text if image fails to load / for accessibility","Resizes the image","Links the image"],ans:1,topic:"HTML",diff:"easy",runs:2,exp:"alt text displays when the image can't load and is read by screen readers for accessibility. Always include alt on important images."},
+  {q:"What CSS property changes text colour?",code:null,opts:["text-color","font-color","color","foreground"],ans:2,topic:"CSS",diff:"easy",runs:2,exp:"The color property in CSS sets the text (foreground) color. background-color sets the background."},
+  {q:"What does <div> do in HTML?",code:null,opts:["Creates a heading","A block-level container with no semantic meaning","Creates a link","Defines a table"],ans:1,topic:"HTML",diff:"easy",runs:2,exp:"<div> is a generic block-level container. It groups content for styling. Use semantic tags (header, main, section) when meaning matters."},
+  {q:"What is the CSS box model?",code:null,opts:["A type of loop","A framework","Content + Padding + Border + Margin","A grid layout"],ans:2,topic:"CSS",diff:"easy",runs:2,exp:"Every HTML element is a box: content area + padding (inside) + border + margin (outside space)."},
+  // MEDIUM (6)
+  {q:"What does CSS specificity determine?",code:null,opts:["Page load speed","Which CSS rule wins when there are conflicts","Font rendering","Animation speed"],ans:1,topic:"CSS",diff:"medium",runs:4,exp:"Specificity is the algorithm that determines which CSS rule applies when multiple rules target the same element."},
+  {q:"What is a CSS pseudo-class?",code:"a:hover { color: red; }",opts:["A fake class","A selector for special states","A type of animation","An ID selector"],ans:1,topic:"CSS",diff:"medium",runs:4,exp:":hover is a pseudo-class that applies styles when the user hovers over the element. Others: :focus, :nth-child, :not."},
+  {q:"What does the z-index property control?",code:null,opts:["Zoom level","Stacking order of positioned elements","Horizontal position","Z-axis 3D transform"],ans:1,topic:"CSS",diff:"medium",runs:4,exp:"z-index controls the stack order of positioned elements. Higher z-index = on top. Only works with position: relative/absolute/fixed/sticky."},
+  {q:"What is CSS Grid used for?",code:"display: grid;\ngrid-template-columns: 1fr 1fr 1fr;",opts:["Animating elements","Two-dimensional layout with rows and columns","Flexbox alternative for one-dimensional layouts","Adding borders"],ans:1,topic:"CSS",diff:"medium",runs:4,exp:"CSS Grid is a two-dimensional layout system for rows AND columns. Flexbox is one-dimensional (row OR column)."},
+  {q:"What does the HTML <form> action attribute do?",code:null,opts:["Styles the form","Specifies where to send form data on submit","Creates input fields","Validates data"],ans:1,topic:"HTML",diff:"medium",runs:4,exp:"The action attribute specifies the URL where form data is sent when the user submits. Without it, the form submits to the current URL."},
+  {q:"What is the difference between inline and block elements?",code:null,opts:["No difference","Block elements take full width and start on new line; inline flow within text","Inline is for containers","Block is for text only"],ans:1,topic:"HTML",diff:"medium",runs:4,exp:"Block elements (<div>, <p>, <h1>) span full width and force a new line. Inline elements (<span>, <a>) flow within text without breaking the line."},
+  // HARD (6)
+  {q:"What is CSS specificity order from highest to lowest?",code:null,opts:["Elements, Classes, IDs, Inline","Inline styles, IDs, Classes/attributes, Elements","Classes, IDs, Elements, Inline","IDs, Inline, Classes, Elements"],ans:1,topic:"CSS",diff:"hard",runs:6,exp:"Specificity order: Inline styles (1000) > ID selectors (100) > Class/attribute/pseudo-class (10) > Element/pseudo-element (1)."},
+  {q:"What does position: sticky do?",code:null,opts:["Makes element fixed to viewport","Element is relative until scroll reaches threshold, then becomes fixed","Removes from document flow","Positions relative to parent"],ans:1,topic:"CSS",diff:"hard",runs:6,exp:"sticky toggles between relative and fixed based on scroll position. The element sticks when the user scrolls past a threshold."},
+  {q:"What is the CSS :not() pseudo-class?",code:"button:not(.disabled) { color: blue; }",opts:["Selects elements that don't match a selector","Inverts all styles","Creates negative margins","Removes element"],ans:0,topic:"CSS",diff:"hard",runs:6,exp:":not(selector) selects elements that do NOT match the given selector. Here it styles all buttons that don't have class 'disabled'."},
+  {q:"What does the HTML data-* attribute allow?",code:"<div data-user-id='42'>",opts:["Styling elements","Storing custom data on HTML elements accessible via JS","Linking resources","Creating IDs"],ans:1,topic:"HTML",diff:"hard",runs:6,exp:"data-* attributes store custom data on HTML elements. Access via JS: element.dataset.userId returns '42'. Great for passing data to scripts."},
+  {q:"What is a CSS custom property (variable)?",code:":root { --primary: #00e5ff; }\ndiv { color: var(--primary); }",opts:["A SASS feature only","A reusable value defined with -- and used via var()","A JavaScript variable","A preprocessor feature"],ans:1,topic:"CSS",diff:"hard",runs:6,exp:"CSS variables start with -- and are accessed with var(). They cascade and can be changed via JavaScript — great for theming."},
+  {q:"What does the srcset attribute on an image do?",code:null,opts:["Sets multiple image sources for different screen sizes","Creates a gallery","Adds fallback URLs","Links to CSS"],ans:0,topic:"HTML",diff:"hard",runs:6,exp:"srcset lets the browser choose the best image based on screen size and resolution. Essential for responsive images."},
+  // EXPERT (6)
+  {q:"What is the CSS contain property used for?",code:null,opts:["Centers content","Isolates an element for rendering performance — limits browser paint/layout recalculations","Contains overflow","Defines a block context"],ans:1,topic:"CSS",diff:"expert",runs:6,exp:"contain: strict tells the browser the element's subtree is independent, allowing paint/layout optimizations without affecting the rest of the page."},
+  {q:"What is the CSS :is() pseudo-class?",code:":is(h1, h2, h3) { color: gold; }",opts:["Checks if element exists","Groups selectors, taking the highest specificity of its arguments","Creates a condition","An alias for :not()"],ans:1,topic:"CSS",diff:"expert",runs:6,exp:":is() accepts a list of selectors and matches any element matching any of them. Reduces repetition. Takes specificity of its most specific argument."},
+  {q:"What does the HTML <template> element do?",code:null,opts:["Creates a CSS template","Holds client-side HTML that is not rendered until activated by JavaScript","Defines a page layout","Creates a reusable style"],ans:1,topic:"HTML",diff:"expert",runs:6,exp:"<template> holds HTML fragments that are inert (not rendered, no scripts run) until cloned and inserted into the DOM via JavaScript."},
+  {q:"What is content-visibility: auto in CSS?",code:null,opts:["Makes content invisible","Skips rendering off-screen content until it's near the viewport","Hides content from SEO","Auto-calculates height"],ans:1,topic:"CSS",diff:"expert",runs:6,exp:"content-visibility: auto is a powerful performance optimization that skips rendering off-screen elements, dramatically improving initial page load."},
+  {q:"What are CSS logical properties?",code:"margin-inline-start: 1rem;",opts:["Directional properties based on text flow rather than physical directions","A new unit system","Properties for animations","SVG properties"],ans:0,topic:"CSS",diff:"expert",runs:6,exp:"Logical properties (margin-inline, padding-block) adapt to text direction and writing mode, making layouts work correctly in RTL languages like Arabic."},
+  {q:"What is the Intersection Observer API used for?",code:null,opts:["Comparing DOM elements","Asynchronously observing when elements enter/exit the viewport","Measuring page performance","Creating overlapping layouts"],ans:1,topic:"APIs",diff:"expert",runs:6,exp:"Intersection Observer efficiently detects when elements become visible in the viewport — used for lazy loading images and infinite scroll."},
+],
+
+// ==================== SQL (30 questions) ====================
+sql:[
+  // BEGINNER (6)
+  {q:"What does SELECT * FROM users do?",code:null,opts:["Deletes all users","Updates all rows","Returns all columns from users table","Creates users table"],ans:2,topic:"Basics",diff:"beginner",runs:1,exp:"SELECT specifies columns (* = all), FROM specifies the table. This retrieves every row and column from users."},
+  {q:"Which clause filters rows in SQL?",code:null,opts:["ORDER BY","GROUP BY","WHERE","HAVING"],ans:2,topic:"Filtering",diff:"beginner",runs:1,exp:"WHERE filters rows BEFORE grouping. HAVING filters AFTER grouping (with GROUP BY)."},
+  {q:"What does INSERT INTO do?",code:null,opts:["Updates existing rows","Adds new rows to a table","Deletes rows","Creates a new table"],ans:1,topic:"DML",diff:"beginner",runs:1,exp:"INSERT INTO table_name (col1, col2) VALUES (val1, val2) adds a new row to the specified table."},
+  {q:"What is the purpose of the PRIMARY KEY constraint?",code:null,opts:["Allows duplicate values","Uniquely identifies each row and cannot be NULL","Speeds up queries","Defines relationships"],ans:1,topic:"Schema",diff:"beginner",runs:1,exp:"PRIMARY KEY uniquely identifies each row in a table. It must be unique and cannot be NULL. Usually an integer or UUID."},
+  {q:"Which SQL command removes all rows from a table?",code:null,opts:["DELETE FROM table;","DROP TABLE table;","REMOVE FROM table;","TRUNCATE TABLE table;"],ans:3,topic:"DML",diff:"beginner",runs:1,exp:"TRUNCATE TABLE removes all rows quickly without logging individual row deletions. DELETE FROM table; also works but is slower. DROP TABLE removes the table structure too."},
+  {q:"What does ORDER BY do?",code:null,opts:["Filters rows","Groups rows","Sorts result rows","Creates an index"],ans:2,topic:"Basics",diff:"beginner",runs:1,exp:"ORDER BY col ASC/DESC sorts the result set. ASC = ascending (default), DESC = descending."},
+  // EASY (6)
+  {q:"What does JOIN do?",code:null,opts:["Merges two tables into one result","Deletes duplicate rows","Sorts the result","Creates a new table"],ans:0,topic:"Joins",diff:"easy",runs:2,exp:"JOIN combines rows from two or more tables based on a related column. INNER JOIN only returns matching rows."},
+  {q:"What does COUNT(*) return?",code:"SELECT COUNT(*) FROM orders;",opts:["Sum of values","Number of rows","Average value","Max value"],ans:1,topic:"Aggregates",diff:"easy",runs:2,exp:"COUNT(*) returns the number of rows in the result set, including those with NULL values."},
+  {q:"What is the difference between CHAR and VARCHAR?",code:null,opts:["No difference","CHAR is fixed-length; VARCHAR is variable-length","VARCHAR is faster","CHAR stores more data"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"CHAR(n) is fixed-length, always uses n bytes. VARCHAR(n) stores variable-length strings up to n characters, using only needed space."},
+  {q:"What does the DISTINCT keyword do?",code:"SELECT DISTINCT city FROM customers;",opts:["Counts unique values","Returns only unique rows","Sorts the result","Removes NULL"],ans:1,topic:"Basics",diff:"easy",runs:2,exp:"DISTINCT eliminates duplicate values from the result set. Here, each city appears only once regardless of how many customers are from there."},
+  {q:"What does a FOREIGN KEY do?",code:null,opts:["Creates primary key","Links a column to a primary key in another table","Speeds up queries","Stores unique values"],ans:1,topic:"Schema",diff:"easy",runs:2,exp:"FOREIGN KEY creates a referential integrity constraint. It ensures values in a column match values in another table's primary key."},
+  {q:"What does the LIKE operator do?",code:"SELECT * FROM names WHERE name LIKE 'A%';",opts:["Exact match","Pattern matching with wildcards","Case-sensitive comparison","Regular expression match"],ans:1,topic:"Filtering",diff:"easy",runs:2,exp:"LIKE does pattern matching. % matches any sequence of characters. _ matches a single character. 'A%' matches names starting with A."},
+  // MEDIUM (6)
+  {q:"What is the difference between WHERE and HAVING?",code:null,opts:["No difference","WHERE filters before grouping, HAVING filters after","HAVING works on rows, WHERE on groups","WHERE is faster"],ans:1,topic:"Grouping",diff:"medium",runs:4,exp:"WHERE filters individual rows before aggregation. HAVING filters groups after GROUP BY and aggregation functions like COUNT/SUM."},
+  {q:"What does an INDEX do?",code:null,opts:["Adds row numbers","Creates a backup","Speeds up queries by creating a lookup structure","Enforces uniqueness"],ans:2,topic:"Performance",diff:"medium",runs:4,exp:"An index creates a data structure that allows the database to find rows faster without scanning the entire table (like a book index)."},
+  {q:"What is the result of LEFT JOIN?",code:null,opts:["Only matching rows","All rows from left table, matching from right (NULLs for no match)","All rows from both tables","Only unmatched rows"],ans:1,topic:"Joins",diff:"medium",runs:4,exp:"LEFT JOIN returns ALL rows from the left table and matching rows from the right. If no match, right-side columns are NULL."},
+  {q:"What does GROUP BY do?",code:"SELECT dept, COUNT(*) FROM employees\nGROUP BY dept;",opts:["Sorts the result","Organises rows into groups for aggregate functions","Filters rows","Joins tables"],ans:1,topic:"Aggregates",diff:"medium",runs:4,exp:"GROUP BY groups rows sharing the same values. Aggregate functions (COUNT, SUM, AVG) then operate on each group separately."},
+  {q:"What does a subquery do?",code:"SELECT * FROM users\nWHERE id IN (SELECT user_id FROM orders);",opts:["A stored procedure","A query nested inside another query","A view","A trigger"],ans:1,topic:"Advanced",diff:"medium",runs:4,exp:"A subquery is a query inside another query. Here it finds user IDs who have orders, then the outer query gets those users."},
+  {q:"What is the difference between UNION and UNION ALL?",code:null,opts:["No difference","UNION removes duplicates; UNION ALL keeps all rows","UNION ALL is slower","UNION joins tables"],ans:1,topic:"Set Ops",diff:"medium",runs:4,exp:"UNION combines result sets and removes duplicate rows. UNION ALL includes all rows including duplicates — and is faster."},
+  // HARD (6)
+  {q:"What is a CTE (Common Table Expression)?",code:"WITH cte AS (\n  SELECT * FROM orders\n)\nSELECT * FROM cte;",opts:["A permanent table","A named temporary result set usable within a query","A stored procedure","A materialized view"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"CTEs (WITH clause) define a named temporary result set. They improve readability and can be referenced multiple times in the same query."},
+  {q:"What does COALESCE() do?",code:"SELECT COALESCE(phone, email, 'N/A') FROM contacts;",opts:["Combines strings","Returns the first non-NULL value in a list","Counts non-NULLs","Converts NULL to 0"],ans:1,topic:"Functions",diff:"hard",runs:6,exp:"COALESCE returns the first non-NULL value from its arguments. Here: phone if not null, else email, else 'N/A'."},
+  {q:"What is a window function?",code:"SELECT name, salary,\nRANK() OVER (ORDER BY salary DESC) as rank\nFROM employees;",opts:["A function on views","Aggregate function across rows related to the current row without collapsing them","A stored procedure","A trigger"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"Window functions (RANK, ROW_NUMBER, LAG, SUM OVER) perform calculations across related rows while keeping individual rows intact."},
+  {q:"What is database normalization?",code:null,opts:["Making queries faster","Organizing data to reduce redundancy and improve integrity","Creating indexes","Encrypting data"],ans:1,topic:"Design",diff:"hard",runs:6,exp:"Normalization organizes tables to minimize redundancy and dependency. Normal forms (1NF, 2NF, 3NF) progressively eliminate anomalies."},
+  {q:"What is the N+1 query problem?",code:null,opts:["Having more than N tables","Loading a list then querying each item individually — (N) additional queries","Using NULL values","An index limitation"],ans:1,topic:"Performance",diff:"hard",runs:6,exp:"N+1 problem: 1 query fetches a list of N items, then N more queries fetch related data for each. Solution: JOIN or eager loading."},
+  {q:"What does EXPLAIN do in SQL?",code:null,opts:["Describes table schema","Shows the query execution plan without running the query","Explains syntax errors","Validates constraints"],ans:1,topic:"Performance",diff:"hard",runs:6,exp:"EXPLAIN shows how the database engine will execute a query — which indexes it uses, join types, estimated rows. Essential for optimization."},
+  // EXPERT (6)
+  {q:"What is a covering index?",code:null,opts:["An index on all columns","An index that contains all columns needed by a query, avoiding a table lookup","A unique index","A clustered index"],ans:1,topic:"Performance",diff:"expert",runs:6,exp:"A covering index includes all columns a query needs, so the database can answer the query from the index alone without touching the main table."},
+  {q:"What is MVCC (Multi-Version Concurrency Control)?",code:null,opts:["A backup strategy","Storing multiple versions of data to allow concurrent reads/writes without locking","A replication method","A normalization technique"],ans:1,topic:"Transactions",diff:"expert",runs:6,exp:"MVCC allows concurrent transactions by keeping multiple versions of rows. Readers don't block writers and vice versa (used in PostgreSQL, MySQL InnoDB)."},
+  {q:"What is a deadlock in databases?",code:null,opts:["A slow query","When two transactions hold locks the other needs, causing both to wait forever","A corrupted index","A failed connection"],ans:1,topic:"Transactions",diff:"expert",runs:6,exp:"Deadlock: Transaction A holds lock 1, waits for lock 2. Transaction B holds lock 2, waits for lock 1. Both wait forever. DBs detect and kill one."},
+  {q:"What is the difference between clustered and non-clustered index?",code:null,opts:["No difference","Clustered physically orders table rows by key; non-clustered is a separate structure","Non-clustered is faster","Clustered is on all columns"],ans:1,topic:"Indexes",diff:"expert",runs:6,exp:"Clustered index physically reorders table data (one per table, usually primary key). Non-clustered is a separate B-tree structure pointing to rows."},
+  {q:"What is ACID in databases?",code:null,opts:["A query language","Atomicity, Consistency, Isolation, Durability — transaction guarantees","An index type","A normalization level"],ans:1,topic:"Transactions",diff:"expert",runs:6,exp:"ACID: Atomicity (all-or-nothing), Consistency (valid state), Isolation (concurrent transactions don't interfere), Durability (committed data persists)."},
+  {q:"What is database sharding?",code:null,opts:["Deleting old data","Horizontal partitioning across multiple databases for scale","Encrypting sensitive columns","A backup technique"],ans:1,topic:"Scaling",diff:"expert",runs:6,exp:"Sharding horizontally partitions data across multiple database servers (shards). Each shard holds a subset of rows, enabling horizontal scaling."},
+],
+
+// ==================== C# (30 questions) ====================
+csharp:[
+  // BEGINNER (6)
+  {q:"Which symbol is used for string interpolation in C#?",code:"string name = \"World\";\nConsole.WriteLine($\"Hello, {name}!\");",opts:["@","#","$","&"],ans:2,topic:"Strings",diff:"beginner",runs:1,exp:"$ prefix enables string interpolation in C#. Variables in {} are evaluated and embedded in the string."},
+  {q:"How do you write to the console in C#?",code:null,opts:["print('Hello')","System.out.println('Hello')","Console.WriteLine(\"Hello\")","echo 'Hello'"],ans:2,topic:"I/O",diff:"beginner",runs:1,exp:"Console.WriteLine() outputs text to the console and adds a newline. Console.Write() outputs without a newline."},
+  {q:"What is the correct way to declare an integer in C#?",code:null,opts:["integer x = 5;","var x: int = 5;","int x = 5;","Int x = 5;"],ans:2,topic:"Types",diff:"beginner",runs:1,exp:"int is the C# keyword for a 32-bit integer. You can also use var (type inferred) or the full name Int32."},
+  {q:"How do you create a class in C#?",code:null,opts:["struct Dog {}","type Dog {}","object Dog {}","class Dog {}"],ans:3,topic:"OOP",diff:"beginner",runs:1,exp:"class keyword defines a class in C#. class Dog { } creates a new class named Dog."},
+  {q:"What keyword is used for a loop that runs while a condition is true?",code:null,opts:["for","do","while","foreach"],ans:2,topic:"Loops",diff:"beginner",runs:1,exp:"while (condition) {} executes the loop body as long as the condition is true. for and foreach are for iteration."},
+  {q:"What does the 'using' keyword do at the top of a C# file?",code:"using System;",opts:["Imports a namespace","Defines a class","Creates a variable","Disposes resources"],ans:0,topic:"Namespaces",diff:"beginner",runs:1,exp:"using at the top of a file imports a namespace, letting you use its types without full qualification. using System; lets you write Console instead of System.Console."},
+  // EASY (6)
+  {q:"What is a nullable type in C#?",code:null,opts:["A type with null value","A type that can hold its normal values plus null","A reference type","An optional parameter"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"int? is shorthand for Nullable<int>, allowing the value type to also hold null. Useful for optional data."},
+  {q:"What does the 'readonly' keyword do?",code:null,opts:["Makes property public","Field can only be set in declaration or constructor","Makes it a constant","Prevents inheritance"],ans:1,topic:"Keywords",diff:"easy",runs:2,exp:"readonly fields can only be assigned at declaration or in the constructor. Unlike const, they're evaluated at runtime."},
+  {q:"What is the difference between == and .Equals() in C#?",code:null,opts:["No difference","== checks reference for objects; .Equals() checks value","Equals is faster","== works on value types only"],ans:1,topic:"Equality",diff:"easy",runs:2,exp:"For objects, == checks reference equality by default. .Equals() checks value equality. String overrides == to check content."},
+  {q:"What is a property in C#?",code:"public int Age { get; set; }",opts:["A public field","A method pair providing controlled access to a field","A static variable","An interface member"],ans:1,topic:"OOP",diff:"easy",runs:2,exp:"Properties provide controlled access to fields via get (read) and set (write) accessors. Auto-properties like this generate a backing field automatically."},
+  {q:"What does the List<T> class do?",code:null,opts:["Creates a fixed array","A generic dynamic array that can grow and shrink","A dictionary","A set"],ans:1,topic:"Collections",diff:"easy",runs:2,exp:"List<T> is a generic, dynamic list that resizes automatically. Similar to Java's ArrayList. T is the element type."},
+  {q:"What is an enum in C#?",code:"enum Direction { North, South, East, West }",opts:["A class type","A set of named integer constants","A generic collection","An interface"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"Enums define a set of named constants. By default, values start at 0 and increment. Great for representing finite states."},
+  // MEDIUM (6)
+  {q:"What does LINQ stand for?",code:null,opts:["Language Integrated Query","Linear Node Query","Linked Interface Query","List Indexed Node Query"],ans:0,topic:"LINQ",diff:"medium",runs:4,exp:"LINQ (Language Integrated Query) allows querying collections using SQL-like syntax directly in C# code."},
+  {q:"What is an interface in C#?",code:null,opts:["A base class","A contract defining members a class must implement","A generic class","An abstract property"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"An interface defines a contract — methods, properties, events a class must implement. A class can implement multiple interfaces."},
+  {q:"What does the virtual keyword allow?",code:null,opts:["Makes method static","Allows method to be overridden in derived classes","Makes method abstract","Makes method sealed"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"virtual marks a method as overridable. Derived classes use override to provide a new implementation."},
+  {q:"What is a delegate in C#?",code:null,opts:["A design pattern","A type-safe function pointer — holds reference to a method","A base class","An async keyword"],ans:1,topic:"Delegates",diff:"medium",runs:4,exp:"A delegate is a type-safe reference to a method. It allows methods to be passed as parameters and used for callbacks and events."},
+  {q:"What is the difference between abstract class and interface in C#?",code:null,opts:["No difference","Abstract can have implementation; interface (pre-C#8) cannot","Interface is faster","Abstract is multi-inheritable"],ans:1,topic:"OOP",diff:"medium",runs:4,exp:"Abstract classes can have fields, constructors, concrete methods. Interfaces define contracts without implementation (pre-C#8). A class can only extend one abstract class but implement many interfaces."},
+  {q:"What does async/await do in C#?",code:"public async Task<int> GetDataAsync() {\n    var result = await HttpClient.GetAsync(url);\n}",opts:["Creates new threads","Non-blocking asynchronous programming that doesn't block the thread","Parallel processing","Timer callbacks"],ans:1,topic:"Async",diff:"medium",runs:4,exp:"async/await enables non-blocking async code. await suspends the method until the Task completes, freeing the thread to do other work."},
+  // HARD (6)
+  {q:"What is the difference between ref and out parameters?",code:null,opts:["No difference","ref must be initialized; out must be assigned in method","out must be initialized; ref must be assigned","ref is faster"],ans:1,topic:"Advanced",diff:"hard",runs:6,exp:"ref passes an already-initialized variable. out doesn't require prior initialization but the method MUST assign it before returning."},
+  {q:"What is a lambda expression in C#?",code:"Func<int,int> square = x => x * x;",opts:["A loop shorthand","An anonymous inline method","A delegate type","A LINQ keyword"],ans:1,topic:"Functional",diff:"hard",runs:6,exp:"Lambda expressions create anonymous methods inline. x => x * x takes x and returns x squared. Used with delegates, LINQ, and events."},
+  {q:"What is the difference between IEnumerable and IQueryable?",code:null,opts:["No difference","IEnumerable executes in memory; IQueryable translates to database queries","IQueryable is in-memory","IEnumerable is faster for DB"],ans:1,topic:"LINQ",diff:"hard",runs:6,exp:"IEnumerable executes LINQ in C# memory. IQueryable translates expressions to SQL (via providers like EF), executing filtering at the database."},
+  {q:"What is the 'using' statement for resource management?",code:"using (var conn = new SqlConnection(str)) {\n    // use conn\n}",opts:["Imports namespace","Automatically calls Dispose() on exit, even if exception occurs","Creates a scope","Declares a variable"],ans:1,topic:"Resources",diff:"hard",runs:6,exp:"using statement calls Dispose() automatically when the block exits. Implements the IDisposable pattern safely for streams, connections, etc."},
+  {q:"What is the Span<T> type used for?",code:null,opts:["Generic collection","A stack-allocated view over contiguous memory for zero-copy slicing","A nullable wrapper","A linked list"],ans:1,topic:"Performance",diff:"hard",runs:6,exp:"Span<T> represents a contiguous region of memory (array, stack, or unmanaged). It enables high-performance, allocation-free operations on memory."},
+  {q:"What does the record type provide in C#?",code:"record Person(string Name, int Age);",opts:["A database record","An immutable reference type with value-based equality and with-expressions","A struct","A mutable class"],ans:1,topic:"Types",diff:"hard",runs:6,exp:"Records (C# 9+) are reference types with value-based equality, auto-generated ToString, and non-destructive mutation via 'with' expressions."},
+  // EXPERT (6)
+  {q:"What is dependency injection (DI) in .NET?",code:null,opts:["Manual object creation","A pattern where dependencies are provided from outside rather than created internally","A database pattern","A testing mock"],ans:1,topic:"Patterns",diff:"expert",runs:6,exp:"DI provides dependencies to a class from outside (via constructor, property, or method) rather than having the class create them. Enables loose coupling and testability."},
+  {q:"What is the purpose of IDisposable?",code:null,opts:["Marks unused classes","Signals a class holds unmanaged resources and should have Dispose() called","Prevents inheritance","Enables serialization"],ans:1,topic:"Memory",diff:"expert",runs:6,exp:"IDisposable signals a class holds resources (file handles, DB connections) that should be explicitly released via Dispose(). Works with using statements."},
+  {q:"What is covariance in generics?",code:"IEnumerable<string> strings = new List<string>();\nIEnumerable<object> objects = strings; // covariance",opts:["Two types being equal","Allowing a more derived type where a base type is expected in generics","Converting between types","Generic constraints"],ans:1,topic:"Generics",diff:"expert",runs:6,exp:"Covariance (out keyword) allows a generic type to be used where its base type is expected. IEnumerable<string> can be assigned to IEnumerable<object>."},
+  {q:"What is the difference between Task and ValueTask?",code:null,opts:["No difference","Task always allocates; ValueTask avoids allocation when result is available synchronously","ValueTask is newer","Task is for CPU work"],ans:1,topic:"Async",diff:"expert",runs:6,exp:"ValueTask avoids heap allocation when the result is already available synchronously. Use Task for general async; ValueTask for hot paths where synchronous completion is common."},
+  {q:"What is the difference between lock and Monitor in C#?",code:null,opts:["No difference","lock is syntactic sugar for Monitor.Enter/Exit — they're equivalent","Monitor is faster","lock works on value types"],ans:1,topic:"Threading",diff:"expert",runs:6,exp:"lock(obj) compiles to Monitor.Enter(obj, ref lockTaken) and Monitor.Exit(obj). They provide the same mutual exclusion. Monitor has additional methods like TryEnter."},
+  {q:"What is an expression tree in C#?",code:null,opts:["A binary tree structure","A code structure representing code as data — lambdas as inspectable objects rather than bytecode","A DOM tree","A parse tree"],ans:1,topic:"Advanced",diff:"expert",runs:6,exp:"Expression trees represent code (lambdas) as data structures that can be inspected and translated at runtime. Used by LINQ providers to translate C# to SQL."},
+],
+
+// ==================== RUST (30 questions) ====================
+rust:[
+  // BEGINNER (6)
+  {q:"What is ownership in Rust?",code:null,opts:["A design pattern","Each value has one owner; dropping the owner frees memory","A type of reference","A garbage collector"],ans:1,topic:"Ownership",diff:"beginner",runs:1,exp:"Rust's ownership system: each value has one owner. When the owner goes out of scope, the value is dropped — no GC needed!"},
+  {q:"How do you declare an immutable variable in Rust?",code:null,opts:["var x = 5;","const x = 5;","let x = 5;","mut x = 5;"],ans:2,topic:"Variables",diff:"beginner",runs:1,exp:"let declares a variable in Rust. By default it's immutable. Use let mut for mutable variables."},
+  {q:"How do you print to the console in Rust?",code:null,opts:["print('Hello')","System.out.println('Hello')","println!(\"Hello\")","console.log('Hello')"],ans:2,topic:"I/O",diff:"beginner",runs:1,exp:"println! is a macro (not a function) in Rust. Macros end with !. It adds a newline. print! does not add a newline."},
+  {q:"What is the unit type () in Rust?",code:null,opts:["A null value","An empty tuple representing no value — similar to void","An error type","A boolean"],ans:1,topic:"Types",diff:"beginner",runs:1,exp:"() (unit type) represents the absence of a value. Functions that don't return anything implicitly return (). Similar to void in other languages."},
+  {q:"What is the difference between String and &str in Rust?",code:null,opts:["No difference","String is heap-owned and mutable; &str is an immutable string slice (borrowed view)","&str is mutable","String is on the stack"],ans:1,topic:"Types",diff:"beginner",runs:1,exp:"String is a heap-allocated, owned, mutable string. &str is a borrowed, immutable string slice pointing to existing memory."},
+  {q:"What does 'cargo' do in Rust?",code:null,opts:["Compiles Rust code directly","Rust's package manager and build tool — manages dependencies, builds, and runs tests","An IDE plugin","A linter"],ans:1,topic:"Tooling",diff:"beginner",runs:1,exp:"Cargo is Rust's build system and package manager. cargo build, cargo run, cargo test, and cargo add are common commands."},
+  // EASY (6)
+  {q:"What does & do in Rust?",code:"fn print_len(s: &String) {}",opts:["Dereferences pointer","Creates a reference (borrow)","Allocates memory","Converts type"],ans:1,topic:"Borrowing",diff:"easy",runs:2,exp:"& creates a reference — you borrow the value without taking ownership. The function can use s but doesn't own it."},
+  {q:"What is a Result type used for?",code:null,opts:["Storing test results","Returning either Ok(value) or Err(error)","A numeric type","A boolean"],ans:1,topic:"Error Handling",diff:"easy",runs:2,exp:"Result<T,E> is Rust's way of handling errors explicitly. Functions return Ok(T) on success or Err(E) on failure."},
+  {q:"What is the Option type in Rust?",code:null,opts:["A setting type","Represents either Some(value) or None — safe alternative to null","A configuration type","An async type"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"Option<T> can be Some(T) or None. It replaces null pointers safely. You must explicitly handle both cases."},
+  {q:"What does 'mut' mean in Rust?",code:"let mut x = 5;\nx = 10;",opts:["Multiple types","Mutable — allows the variable's value to be changed","A method","Memory unsafe"],ans:1,topic:"Variables",diff:"easy",runs:2,exp:"Variables in Rust are immutable by default. 'mut' makes them mutable. This prevents accidental mutation and makes intent explicit."},
+  {q:"What are Rust's primitive integer types?",code:null,opts:["int, long, short","i8, i16, i32, i64, u8, u16, u32, u64","integer, unsigned","num, bignum"],ans:1,topic:"Types",diff:"easy",runs:2,exp:"Rust has signed (i8–i128) and unsigned (u8–u128) integers. The number indicates bits. i32 is the default inferred integer type."},
+  {q:"What does the match expression do?",code:"match value {\n    1 => \"one\",\n    2 => \"two\",\n    _ => \"other\"\n}",opts:["A loop","Pattern matching — exhaustive switch-like control flow","A comparison","A function call"],ans:1,topic:"Control Flow",diff:"easy",runs:2,exp:"match performs pattern matching and must cover all possible cases (exhaustive). _ is the catch-all pattern. It's more powerful than switch."},
+  // MEDIUM (6)
+  {q:"What does the ? operator do?",code:"fn read() -> Result<String, io::Error> {\n    let s = fs::read_to_string(\"f\")?;\n    Ok(s)\n}",opts:["Prints result","If Err, returns early with that error","Converts to Option","Unwraps panicking"],ans:1,topic:"Error Handling",diff:"medium",runs:4,exp:"? is shorthand: if the value is Ok, unwrap it; if Err, return the error from the current function early."},
+  {q:"What is the difference between clone() and copy in Rust?",code:null,opts:["No difference","Copy is automatic for simple types; clone() is explicit deep copy for complex types","clone() is faster","Copy is for heap types"],ans:1,topic:"Ownership",diff:"medium",runs:4,exp:"Types that implement Copy (like i32) are automatically copied on assignment. Types like String require .clone() for an explicit deep copy."},
+  {q:"What is a lifetime in Rust?",code:"fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {}",opts:["A timer","An annotation ensuring references don't outlive the data they point to","A variable scope","An async concept"],ans:1,topic:"Lifetimes",diff:"medium",runs:4,exp:"Lifetimes prevent dangling references. 'a annotates that all references with this lifetime are valid for the same scope."},
+  {q:"What does Vec<T> provide in Rust?",code:null,opts:["A fixed array","A heap-allocated, growable array","A linked list","A hash map"],ans:1,topic:"Collections",diff:"medium",runs:4,exp:"Vec<T> is Rust's growable array type, similar to ArrayList or C++ vector. It's heap-allocated and owns its data."},
+  {q:"What is a struct in Rust?",code:"struct Point { x: f64, y: f64 }",opts:["A class","A custom data type grouping related fields","A trait","A module"],ans:1,topic:"Structs",diff:"medium",runs:4,exp:"struct defines a custom type with named fields. Unlike classes, Rust structs have no inheritance. Behavior is added via impl blocks and traits."},
+  {q:"What is a trait in Rust?",code:null,opts:["A type alias","A collection of method signatures defining shared behavior — similar to interfaces","A struct modifier","A keyword"],ans:1,topic:"Traits",diff:"medium",runs:4,exp:"Traits define shared behavior. Types can implement a trait's methods. Similar to interfaces in other languages. Enables polymorphism."},
+  // HARD (6)
+  {q:"What does the borrow checker do in Rust?",code:null,opts:["Manages memory allocation","Enforces ownership rules at compile time — prevents data races and dangling references","Checks syntax errors","Optimizes code"],ans:1,topic:"Ownership",diff:"hard",runs:6,exp:"The borrow checker enforces: 1) Only one mutable reference OR many immutable references at a time. 2) References must not outlive the data they point to."},
+  {q:"What is the difference between Rc<T> and Arc<T>?",code:null,opts:["No difference","Rc is single-threaded reference counting; Arc is atomic (thread-safe) reference counting","Arc is faster","Rc is for heap types"],ans:1,topic:"Smart Pointers",diff:"hard",runs:6,exp:"Rc<T> provides shared ownership via reference counting (single-threaded only). Arc<T> uses atomic operations for thread-safe shared ownership."},
+  {q:"What is a closure in Rust?",code:"let add = |a, b| a + b;",opts:["A module","An anonymous function that can capture variables from its enclosing scope","A struct method","A macro"],ans:1,topic:"Functional",diff:"hard",runs:6,exp:"Closures are anonymous functions with |params| body syntax. They can capture variables from their environment by borrowing or moving."},
+  {q:"What is the Box<T> type used for?",code:null,opts:["A collection","Heap-allocates a value — used for recursive types or trait objects","A mutable reference","A string wrapper"],ans:1,topic:"Smart Pointers",diff:"hard",runs:6,exp:"Box<T> heap-allocates a value with single ownership. Used for recursive data types (like trees), trait objects (Box<dyn Trait>), or transferring ownership."},
+  {q:"What is RefCell<T> used for?",code:null,opts:["Thread synchronization","Interior mutability — allows mutation even with immutable reference, checked at runtime","Atomic operations","Reference counting"],ans:1,topic:"Interior Mutability",diff:"hard",runs:6,exp:"RefCell<T> provides interior mutability — borrow rules enforced at runtime not compile-time. Use when you need mutability inside shared data."},
+  {q:"What does 'dyn Trait' mean in Rust?",code:"fn make_sound(animal: &dyn Animal) {}",opts:["Dynamic import","A trait object — runtime polymorphism via dynamic dispatch","A type cast","A generic bound"],ans:1,topic:"Traits",diff:"hard",runs:6,exp:"dyn Trait creates a trait object for dynamic dispatch. The concrete type is unknown at compile time; a vtable is used at runtime."},
+  // EXPERT (6)
+  {q:"What is zero-cost abstraction in Rust?",code:null,opts:["Free memory","Abstractions (iterators, generics) compile to the same code as handwritten equivalents — no runtime overhead","A garbage collection strategy","A threading model"],ans:1,topic:"Philosophy",diff:"expert",runs:6,exp:"Zero-cost abstractions: using high-level features (iterators, generics, closures) incurs no additional runtime cost vs manual implementation."},
+  {q:"What is the difference between impl Trait and dyn Trait?",code:null,opts:["No difference","impl Trait is static dispatch (monomorphized); dyn Trait is dynamic dispatch (vtable)","dyn is faster","impl is for generics only"],ans:1,topic:"Traits",diff:"expert",runs:6,exp:"impl Trait resolves the concrete type at compile time (static dispatch, fast). dyn Trait uses a vtable at runtime (dynamic dispatch, flexible)."},
+  {q:"What is the Send trait in Rust?",code:null,opts:["Sending data over network","Marks a type as safe to transfer ownership between threads","A message passing system","An async trait"],ans:1,topic:"Concurrency",diff:"expert",runs:6,exp:"Send marks a type as safe to transfer ownership across thread boundaries. Rc<T> is not Send. Arc<T> is Send. The compiler enforces this."},
+  {q:"What does the Pin<T> type prevent?",code:null,opts:["Pinning threads","Prevents a value from being moved in memory — required for self-referential structs and async","Pinning to a core","Locking memory"],ans:1,topic:"Async",diff:"expert",runs:6,exp:"Pin<T> guarantees a value won't be moved in memory. Essential for async/await, where Futures may contain self-referential pointers."},
+  {q:"What is unsafe Rust?",code:null,opts:["Deprecated code","Code blocks where the programmer takes responsibility for certain memory safety guarantees the compiler can't verify","Error-prone code","Experimental features"],ans:1,topic:"Unsafe",diff:"expert",runs:6,exp:"unsafe blocks let you dereference raw pointers, call unsafe functions, and implement unsafe traits. The programmer must manually ensure memory safety."},
+  {q:"What is the purpose of the Sync trait?",code:null,opts:["Synchronizing clocks","Marks a type as safe for shared access (&T) across threads simultaneously","File synchronization","Event synchronization"],ans:1,topic:"Concurrency",diff:"expert",runs:6,exp:"Sync marks a type as safe to share references across threads simultaneously. &T can be sent to another thread only if T: Sync. Mutex<T> is Sync."},
+],
+};
+
+// ======================== STATE ========================
+let state={player:null,lang:null,runs:0,wickets:0,balls:0,totalBalls:30,streak:0,bestStreak:0,correct:0,wrong:0,sixes:0,qIdx:0,pool:[],answered:false,topLevel:'beginner'};
+
+// ======================== SCREENS ========================
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='arena-screen')setTimeout(drawPitch,50);
+}
+
+// ======================== PLAYER GRID ========================
+(function(){
+  const g=document.getElementById('player-grid');
+  PLAYERS.forEach(p=>{
+    const initials=p.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const c=document.createElement('div');
+    c.className='player-card';
+    c.innerHTML=`<div class="player-avatar" style="background:${p.color}22;border-color:${p.border};color:${p.border}">${initials}<span style="position:absolute;bottom:-2px;right:-2px;font-size:0.7rem">${p.flag}</span></div><div class="p-name" style="color:${p.border}">${p.name}</div><div class="p-role">${p.emoji} ${p.role}</div>`;
+    c.onclick=()=>{
+      document.querySelectorAll('.player-card').forEach(x=>x.classList.remove('selected'));
+      c.classList.add('selected');
+      state.player={...p};
+      document.getElementById('player-next-btn').disabled=false;
+    };
+    g.appendChild(c);
+  });
+})();
+
+function setCustomPlayer(){
+  const n=document.getElementById('custom-name').value.trim();
+  if(!n)return;
+  const initials=n.split(' ').map(w=>w[0]).join('').slice(0,2);
+  state.player={name:n,role:'Cricket Legend',emoji:'🌟',color:'#00d4ff',border:'#7fffff',flag:'🌍',initials};
+  document.querySelectorAll('.player-card').forEach(x=>x.classList.remove('selected'));
+  document.getElementById('player-next-btn').disabled=false;
+  document.getElementById('custom-name').style.borderColor='var(--green)';
+}
+
+// ======================== LANG GRID ========================
+(function(){
+  const g=document.getElementById('lang-grid');
+  LANGS.forEach(l=>{
+    const c=document.createElement('div');
+    c.className='lang-card';
+    c.style.cssText=`border-color:rgba(255,255,255,0.08)`;
+    c.innerHTML=`
+      ${l.badge?`<span class="lang-badge" style="background:${l.badgeColor}22;border:1px solid ${l.badgeColor};color:${l.badgeColor}">${l.badge}</span>`:''}
+      <span class="lang-icon">${l.icon}</span>
+      <div class="lang-name" style="color:${l.border}">${l.name}</div>
+      <div class="lang-desc">${l.desc}</div>
+    `;
+    c.onclick=()=>{
+      document.querySelectorAll('.lang-card').forEach(x=>{x.classList.remove('selected');x.style.borderColor='rgba(255,255,255,0.08)';x.style.boxShadow='';});
+      c.classList.add('selected');
+      c.style.borderColor=l.border;
+      c.style.boxShadow=`0 10px 35px ${l.color}44`;
+      state.lang={...l};
+      document.getElementById('lang-next-btn').disabled=false;
+    };
+    g.appendChild(c);
+  });
+})();
+
+// ======================== START ARENA ========================
+function startArena(){
+  const order=['beginner','easy','medium','hard','expert'];
+  const raw=QUESTIONS[state.lang.id]||QUESTIONS.python;
+  state.pool=[...raw].sort((a,b)=>order.indexOf(a.diff)-order.indexOf(b.diff));
+  state.runs=0;state.wickets=0;state.balls=0;state.streak=0;state.bestStreak=0;
+  state.correct=0;state.wrong=0;state.sixes=0;state.qIdx=0;state.answered=false;state.topLevel='beginner';state.sc_last='—';
+  const p=state.player;
+  const initials=(p.initials||(p.name.split(' ').map(w=>w[0]).join('').slice(0,2)));
+  document.getElementById('hud-av').textContent=initials;
+  document.getElementById('hud-av').style.cssText=`background:${p.color}22;border-color:${p.border};color:${p.border};width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Rajdhani,sans-serif;font-size:0.9rem;font-weight:700;border:2px solid;flex-shrink:0`;
+  document.getElementById('hud-nm').textContent=p.name;
+  document.getElementById('hud-st').textContent=`${p.emoji} ${p.role||'Legend'}`;
+  document.getElementById('lang-hud-icon').textContent=state.lang.icon;
+  document.getElementById('lang-hud-name').textContent=state.lang.name;
+  goTo('arena-screen');
+  loadQ();
+  updateSB();
+}
+
+// ======================== LOAD QUESTION ========================
+function loadQ(){
+  if(state.qIdx>=state.pool.length){state.qIdx=0;}
+  const q=state.pool[state.qIdx];
+  state.answered=false;
+  const metaEl=document.getElementById('q-meta');
+  metaEl.innerHTML=`
+    <span class="q-tag tag-diff ${q.diff}">${q.diff.toUpperCase()}</span>
+    <span class="q-tag tag-topic">${q.topic}</span>
+    <span class="q-tag tag-runs">+${q.runs} RUN${q.runs>1?'S':''}</span>
+    <span style="margin-left:auto;font-size:0.7rem;color:var(--muted);font-family:Rajdhani,sans-serif">${state.qIdx+1}/${state.pool.length}</span>
+  `;
+  document.getElementById('progress-bar').style.width=((state.qIdx/state.pool.length)*100)+'%';
+  document.getElementById('q-text').textContent=q.q;
+  const codeEl=document.getElementById('q-code');
+  if(q.code){
+    const lines=q.code.split('\n');
+    codeEl.innerHTML=lines.map((l,i)=>`<span class="code-line-num">${i+1}</span>${escHtml(l)}`).join('\n');
+    codeEl.style.display='block';
+  } else {codeEl.style.display='none';}
+  const optsEl=document.getElementById('opts');
+  optsEl.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt';
+    btn.innerHTML=`<span class="opt-letter">${['A','B','C','D'][i]}</span>${escHtml(o)}`;
+    btn.onclick=()=>answerQ(i);
+    optsEl.appendChild(btn);
+  });
+  const fb=document.getElementById('feedback');
+  fb.className='';fb.style.display='none';
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('sc-level').textContent=q.diff.toUpperCase();
+  const diffOrder=['beginner','easy','medium','hard','expert'];
+  if(diffOrder.indexOf(q.diff)>diffOrder.indexOf(state.topLevel))state.topLevel=q.diff;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ======================== ANSWER ========================
+function answerQ(idx){
+  if(state.answered)return;
+  state.answered=true;
+  state.balls++;
+  const q=state.pool[state.qIdx];
+  state.qIdx++;
+  const opts=document.querySelectorAll('.opt');
+  opts.forEach(o=>o.classList.add('disabled'));
+  const isCorrect=idx===q.ans;
+  opts[idx].classList.add(isCorrect?'correct':'wrong');
+  if(!isCorrect)opts[q.ans].classList.add('correct');
+  const fb=document.getElementById('feedback');
+  if(isCorrect){
+    state.correct++;state.streak++;
+    if(state.streak>state.bestStreak)state.bestStreak=state.streak;
+    state.runs+=q.runs;
+    if(q.runs===6)state.sixes++;
+    state.sc_last=`+${q.runs}`;
+    animateBall(true);
+    showRunsPop(q.runs);
+    fb.className='feedback show good';
+    fb.innerHTML=`<span class="fb-icon">${q.runs===6?'🎆':q.runs===4?'🎯':'✅'}</span><div><strong>${q.runs===6?'SIX! MAXIMUM!':q.runs===4?'FOUR! BOUNDARY!':'CORRECT!'} +${q.runs} run${q.runs>1?'s':''}</strong>${q.q}<span class="fb-explain">${q.exp}</span></div>`;
+    fb.style.display='flex';
+  } else {
+    state.wrong++;state.streak=0;state.wickets++;
+    state.sc_last='W';
+    animateBall(false);
+    fb.className='feedback show bad';
+    fb.innerHTML=`<span class="fb-icon">❌</span><div><strong>WICKET! Wrong answer.</strong>Correct: ${q.opts[q.ans]}<span class="fb-explain">${q.exp}</span></div>`;
+    fb.style.display='flex';
+  }
+  updateSB();
+  if(state.wickets>=10||state.balls>=state.totalBalls){setTimeout(showOver,1400);}
+  else{document.getElementById('next-btn').style.display='block';}
+}
+
+function nextQ(){
+  document.getElementById('next-btn').style.display='none';
+  loadQ();
+}
+
+function showRunsPop(r){
+  const pop=document.getElementById('runs-pop');
+  const msgs={1:'1 RUN!',2:'2 RUNS! ✌',4:'FOUR! 🎯',6:'SIX! 🎆'};
+  pop.textContent=msgs[r]||`+${r}`;
+  if(r===6){pop.style.background='linear-gradient(135deg,#ffd700,#ff8c00)';}
+  else if(r===4){pop.style.background='linear-gradient(135deg,#00e676,#009944)';}
+  else{pop.style.background='linear-gradient(135deg,#00b4d8,#0077b6)';}
+  pop.classList.add('show');
+  setTimeout(()=>pop.classList.remove('show'),1100);
+}
+
+// ======================== BALL ANIMATION ========================
+function animateBall(hit){
+  const ball=document.getElementById('ball');
+  const bsm=document.getElementById('batsman-el');
+  const W=document.getElementById('pitch-wrap').offsetWidth;
+  ball.style.cssText=`position:absolute;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e05050,#8b0000);box-shadow:0 0 8px rgba(200,50,50,0.6);display:block;z-index:10;left:calc(50% - 55px);bottom:125px;transition:none`;
+  setTimeout(()=>{
+    ball.style.transition='all 0.55s cubic-bezier(0.5,0,0.3,1)';
+    if(hit){
+      ball.style.left=(W*0.78)+'px';
+      ball.style.bottom='220px';
+      bsm.style.transform='translateX(-50%) rotate(-15deg) scale(1.15)';
+    } else {
+      ball.style.left='calc(50% + 14px)';
+      ball.style.bottom='24px';
+      bsm.style.animation='wicket 0.5s ease';
+    }
+    setTimeout(()=>{ball.style.display='none';bsm.style.transform='translateX(-50%)';bsm.style.animation='';},650);
+  },60);
+}
+
+// ======================== SCOREBOARD ========================
+function updateSB(){
+  const overs=Math.floor(state.balls/6)+'.'+Math.floor(state.balls%6);
+  document.getElementById('sc-runs').textContent=state.runs;
+  document.getElementById('sc-wkts').textContent=`${state.wickets}/10`;
+  document.getElementById('sc-overs').textContent=overs;
+  document.getElementById('sc-balls').textContent=state.totalBalls-state.balls;
+  document.getElementById('sc-streak').textContent=state.streak;
+  document.getElementById('sc-last').textContent=state.sc_last||'—';
+  document.getElementById('sc-last').style.color=state.sc_last==='W'?'var(--red2)':'var(--green)';
+}
+
+// ======================== MATCH OVER ========================
+function showOver(){
+  const total=state.correct+state.wrong;
+  const sr=total>0?Math.round((state.correct/total)*100):0;
+  document.getElementById('st-correct').textContent=state.correct;
+  document.getElementById('st-wrong').textContent=state.wrong;
+  document.getElementById('st-sr').textContent=sr+'%';
+  document.getElementById('st-streak').textContent=state.bestStreak;
+  document.getElementById('st-sixes').textContent=state.sixes;
+  document.getElementById('st-best').textContent=(state.topLevel||'beginner').toUpperCase();
+  document.getElementById('final-runs').innerHTML=`${state.runs}<span>RUNS SCORED</span>`;
+  document.getElementById('ol-icon').textContent=state.lang.icon;
+  document.getElementById('ol-name').textContent=state.lang.name.toUpperCase()+' CHALLENGE';
+  let grade,icon;
+  const name=state.player.name.split(' ')[0];
+  if(state.runs>=100){grade=`CENTURY! Legendary innings, ${name}! You are a true coding champion! 🌟`;icon='🏆';}
+  else if(state.runs>=80){grade=`Incredible innings, ${name}! You've mastered the fundamentals — keep building on this foundation! 🌟`;icon='🏆';}
+  else if(state.runs>=50){grade=`Great knock, ${name}! Solid performance. A bit more practice and you'll be smashing centuries! 🥇`;icon='🥇';}
+  else if(state.runs>=30){grade=`Decent effort, ${name}! Review the wrong answers and come back stronger next innings. 💪`;icon='🥈';}
+  else{grade=`Early dismissal, ${name}. Don't worry — every expert was once a beginner. Study the explanations and retry! 📚`;icon='📚';}
+  document.getElementById('trophy').textContent=icon;
+  document.getElementById('grade-msg').textContent=grade;
+  document.getElementById('over-title').textContent=state.wickets>=10?'ALL OUT! 😱':'INNINGS COMPLETE! 🎉';
+  goTo('over-screen');
+}
+
+function restartSame(){
+  const lang=state.lang;
+  const player=state.player;
+  state.lang=lang;state.player=player;
+  startArena();
+}
+
+window.goTo=goTo;window.setCustomPlayer=setCustomPlayer;window.startArena=startArena;window.nextQ=nextQ;window.restartSame=restartSame;
+</script>
+</body>
+</html>
